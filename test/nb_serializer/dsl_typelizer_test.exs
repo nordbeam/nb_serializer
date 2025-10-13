@@ -83,23 +83,23 @@ defmodule NbSerializer.DSLTypelizerTest do
     end
   end
 
-  describe "field macro with arrays" do
-    defmodule ArraySerializer do
+  describe "field macro with lists" do
+    defmodule ListSerializer do
       use NbSerializer.Serializer
 
       schema do
-        field(:tags, :string, array: true)
-        field(:scores, :number, array: true)
-        field(:items, type: "Product", array: true)
+        field(:tags, :string, list: true)
+        field(:scores, :number, list: true)
+        field(:items, type: "Product", list: true)
       end
     end
 
-    test "handles array type modifier" do
-      fields = ArraySerializer.__nb_serializer_fields__()
+    test "handles list type modifier" do
+      fields = ListSerializer.__nb_serializer_fields__()
 
-      assert {:tags, [type: :string, array: true]} in fields
-      assert {:scores, [type: :number, array: true]} in fields
-      assert {:items, [type: "Product", array: true]} in fields
+      assert {:tags, [type: :string, list: true]} in fields
+      assert {:scores, [type: :number, list: true]} in fields
+      assert {:items, [type: "Product", list: true]} in fields
     end
   end
 
@@ -152,7 +152,7 @@ defmodule NbSerializer.DSLTypelizerTest do
         field(:id, :number)
         field(:name, :string, compute: :format_name)
         field(:email, :string, nullable: true, if: :show_email?)
-        field(:tags, :string, array: true, optional: true)
+        field(:tags, :string, list: true, optional: true)
         field(:status, enum: ["active", "inactive"])
         field(:metadata, type: "Record<string, any>", nullable: true)
       end
@@ -176,7 +176,7 @@ defmodule NbSerializer.DSLTypelizerTest do
       tags_field = Enum.find(fields, fn {name, _} -> name == :tags end)
       {_, tags_opts} = tags_field
       assert :string == Keyword.get(tags_opts, :type)
-      assert true == Keyword.get(tags_opts, :array)
+      assert true == Keyword.get(tags_opts, :list)
       assert true == Keyword.get(tags_opts, :optional)
     end
   end

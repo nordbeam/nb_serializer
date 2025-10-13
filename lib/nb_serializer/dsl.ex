@@ -13,7 +13,7 @@ defmodule NbSerializer.DSL do
           enum: list(any()),
           nullable: boolean(),
           optional: boolean(),
-          array: boolean(),
+          list: boolean(),
           from: atom(),
           default: any(),
           compute: atom(),
@@ -77,7 +77,7 @@ defmodule NbSerializer.DSL do
     * `:enum` - List of allowed values for TypeScript enum type
     * `:nullable` - Whether the field can be null (default: false)
     * `:optional` - Whether the field is optional in TypeScript (default: false)
-    * `:array` - Whether this is an array type (can be combined with :type)
+    * `:list` - Whether this is a list type (can be combined with :type)
 
   ## Options
 
@@ -111,9 +111,9 @@ defmodule NbSerializer.DSL do
       field :email, :string, nullable: true
       field :phone, :string, optional: true
 
-      # Array types
-      field :tags, type: :string, array: true
-      field :scores, :number, array: true
+      # List types
+      field :tags, type: :string, list: true
+      field :scores, :number, list: true
 
       # Combined with other field options
       field :full_name, :string, compute: :build_full_name

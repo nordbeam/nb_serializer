@@ -155,7 +155,7 @@ defmodule NbSerializer.Compiler do
         type_info =
           case type do
             :has_one -> %{type: :custom, custom: true, serializer: serializer}
-            :has_many -> %{type: :custom, custom: true, array: true, serializer: serializer}
+            :has_many -> %{type: :custom, custom: true, list: true, serializer: serializer}
           end
 
         {name, type_info}
