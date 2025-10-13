@@ -170,6 +170,20 @@ defmodule NbSerializer.DSL do
             end
 
           opts when is_list(opts) ->
+            # Check if type is a validated TypeScript type from ~TS sigil
+            opts =
+              case Keyword.get(opts, :type) do
+                {:typescript_validated, type_string} ->
+                  # Automatically mark as validated TypeScript type
+                  opts
+                  |> Keyword.put(:type, type_string)
+                  |> Keyword.put(:typescript_validated, true)
+                  |> Keyword.put(:custom, true)
+
+                _ ->
+                  opts
+              end
+
             # Add context for better error messages
             opts_with_context =
               opts
@@ -189,6 +203,8 @@ defmodule NbSerializer.DSL do
   end
 
   # Handle field :name, :typescript, opts (special handling for :typescript type)
+  # NOTE: This form is now optional - you can just use `field :name, type: ~TS"..."`
+  # without the :typescript marker. Keeping for backward compatibility.
   defmacro field(name, :typescript, opts) when is_atom(name) and is_list(opts) do
     quote bind_quoted: [name: name, opts: opts] do
       # Validate that type option exists
@@ -201,38 +217,43 @@ defmodule NbSerializer.DSL do
 
             field #{inspect(name)}, :typescript, type: ~TS"YourType"
 
-          Example:
-            field :metadata, :typescript, type: ~TS"Record<string, any>"
+          Or simply use the shorthand without :typescript:
+
+            field #{inspect(name)}, type: ~TS"YourType"
           """
       end
 
       type_value = Keyword.get(opts, :type)
 
-      # Verify it's a string (which means it went through ~TS or is a plain string)
-      unless is_binary(type_value) do
-        raise CompileError,
-          file: __ENV__.file,
-          line: __ENV__.line,
-          description: """
-          :typescript type must use ~TS sigil for validation:
+      # Handle validated TypeScript types from ~TS sigil
+      {type_string, typescript_validated} =
+        case type_value do
+          {:typescript_validated, str} ->
+            {str, true}
 
-            field #{inspect(name)}, :typescript, type: ~TS"YourType"
+          str when is_binary(str) ->
+            {str, false}
 
-          Got: #{inspect(type_value)}
+          other ->
+            raise CompileError,
+              file: __ENV__.file,
+              line: __ENV__.line,
+              description: """
+              :typescript type must use ~TS sigil for validation:
 
-          The ~TS sigil validates TypeScript syntax at compile time.
-          """
-      end
+                field #{inspect(name)}, :typescript, type: ~TS"YourType"
 
-      # Check if it's validated TypeScript (from ~TS sigil)
-      # The ~TS sigil returns a plain string, so we need to check if it came from
-      # the TypeScript module. We'll use a marker to distinguish validated types.
-      # For now, we'll mark strings as validated if they pass basic checks.
+              Got: #{inspect(other)}
 
-      # Mark as validated TypeScript type
+              The ~TS sigil validates TypeScript syntax at compile time.
+              """
+        end
+
+      # Mark as TypeScript type
       merged_opts =
         opts
-        |> Keyword.put(:typescript_validated, true)
+        |> Keyword.put(:type, type_string)
+        |> Keyword.put(:typescript_validated, typescript_validated)
         |> Keyword.put(:custom, true)
 
       @nb_serializer_fields {name, merged_opts}
