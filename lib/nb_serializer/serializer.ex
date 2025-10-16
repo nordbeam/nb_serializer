@@ -24,6 +24,13 @@ defmodule NbSerializer.Serializer do
 
       @before_compile NbSerializer.Compiler
 
+      # Optional: Register after-compile hook for real-time TypeScript type generation
+      # This only runs if nb_ts is available (it's an optional dependency)
+      # Enables automatic type regeneration during development when serializers are recompiled
+      if Code.ensure_loaded?(NbTs.CompileHooks) do
+        @after_compile {NbTs.CompileHooks, :__after_compile__}
+      end
+
       def serialize(data, opts \\ [])
 
       def serialize(nil, _opts), do: nil

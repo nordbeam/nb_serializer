@@ -430,6 +430,19 @@ Features:
 - Support for nullable, arrays, enums, and custom types
 - Automatic camelCase conversion
 - Runtime type validation with OXC
+- Real-time type regeneration during development (via compile hooks)
+
+When nb_ts is installed, serializers automatically trigger TypeScript type regeneration
+when recompiled during development. This provides real-time type updates without
+manually running `mix nb_ts.gen.types`.
+
+Configure automatic generation in `config/dev.exs`:
+
+```elixir
+config :nb_ts,
+  output_dir: "assets/js/types",
+  auto_generate: true  # Enable real-time type updates (default in dev)
+```
 
 See: [github.com/nordbeam/nb_ts](https://github.com/nordbeam/nb_ts)
 
