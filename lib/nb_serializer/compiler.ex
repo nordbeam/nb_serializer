@@ -151,11 +151,22 @@ defmodule NbSerializer.Compiler do
     relationship_types =
       Enum.map(relationships, fn {type, name, opts} ->
         serializer = Keyword.get(opts, :serializer)
+        # Mark as optional if the relationship has an `if:` condition
+        has_condition = Keyword.has_key?(opts, :if)
 
         type_info =
           case type do
-            :has_one -> %{type: :custom, custom: true, serializer: serializer}
-            :has_many -> %{type: :custom, custom: true, list: true, serializer: serializer}
+            :has_one ->
+              %{type: :custom, custom: true, serializer: serializer, optional: has_condition}
+
+            :has_many ->
+              %{
+                type: :custom,
+                custom: true,
+                list: true,
+                serializer: serializer,
+                optional: has_condition
+              }
           end
 
         {name, type_info}
