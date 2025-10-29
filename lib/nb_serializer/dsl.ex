@@ -73,7 +73,7 @@ defmodule NbSerializer.DSL do
 
   ## Type Options
 
-    * `:type` - TypeScript type (:string, :number, :boolean, :any, or custom string)
+    * `:type` - TypeScript type (:string, :number, :integer, :boolean, :any, or custom string)
     * `:enum` - List of allowed values for TypeScript enum type
     * `:nullable` - Whether the field can be null (default: false)
     * `:optional` - Whether the field is optional in TypeScript (default: false)
@@ -93,11 +93,13 @@ defmodule NbSerializer.DSL do
 
       # Simple types
       field :id, type: :number
+      field :count, type: :integer
       field :name, type: :string
       field :active, type: :boolean
 
       # Shorthand for common types (second parameter as atom)
       field :id, :number
+      field :count, :integer
       field :name, :string
       field :metadata, :any
 
@@ -162,7 +164,17 @@ defmodule NbSerializer.DSL do
               NbSerializer.Typelizer.TypeValidator.validate_field_opts(opts_with_context)
             end
 
-            if atom in [:string, :number, :boolean, :decimal, :uuid, :date, :datetime, :any] do
+            if atom in [
+                 :string,
+                 :number,
+                 :integer,
+                 :boolean,
+                 :decimal,
+                 :uuid,
+                 :date,
+                 :datetime,
+                 :any
+               ] do
               type_opts
             else
               # Treat as option key if not a valid type
