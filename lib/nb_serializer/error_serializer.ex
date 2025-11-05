@@ -20,10 +20,10 @@ defmodule NbSerializer.ErrorSerializer do
         use NbSerializer.Serializer
 
         schema do
-          field :error
-          field :message
-          field :code
-          field :timestamp, compute: :current_time
+          field :error, :string
+          field :message, :string
+          field :code, :string
+          field :timestamp, :datetime, compute: :current_time
         end
 
         def current_time(_error, _opts) do
@@ -44,12 +44,12 @@ defmodule NbSerializer.ErrorSerializer do
   use NbSerializer.Serializer
 
   schema do
-    field(:error)
-    field(:message)
-    field(:code)
-    field(:status)
-    field(:details)
-    field(:field)
+    field(:error, :string, optional: true)
+    field(:message, :string, optional: true)
+    field(:code, :string, optional: true)
+    field(:status, :number, optional: true)
+    field(:details, :any, optional: true)
+    field(:field, :string, optional: true)
   end
 
   @doc """

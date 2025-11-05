@@ -64,7 +64,28 @@ mix compile
 1. **No Anonymous Functions in DSL**: All functions must be named module functions for compile-time safety
 2. **Compile-Time Optimization**: DSL compiles to efficient runtime code via macros
 3. **Explicit Field Definition**: Serializers must explicitly define included fields
-4. **Ecto-First Design**: Built-in handling for Ecto associations and schemas
+4. **Required Type Annotations**: All serializer fields MUST have explicit types for TypeScript generation and type safety
+5. **Ecto-First Design**: Built-in handling for Ecto associations and schemas
+
+## Type Requirements
+
+**IMPORTANT**: All fields must specify an explicit type. Typeless field definitions will cause a compile-time error.
+
+```elixir
+# ❌ WRONG - Will not compile
+field :id
+
+# ✅ CORRECT - Explicit type required
+field :id, :number
+field :name, :string
+field :active, :boolean
+```
+
+Available types:
+- `:string`, `:number`, `:integer`, `:boolean`
+- `:decimal`, `:uuid`, `:date`, `:datetime`
+- `:any` (for dynamic/flexible content)
+- Custom TypeScript types using `~TS` sigil: `type: ~TS"Record<string, any>"`
 
 ## Testing Structure
 

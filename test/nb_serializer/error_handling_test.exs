@@ -6,13 +6,13 @@ defmodule NbSerializer.ErrorHandlingTest do
       use NbSerializer.Serializer
 
       schema do
-        field(:id)
-        field(:name)
-        field(:age, compute: :calculate_age, on_error: :null)
-        field(:status, compute: :missing_function, on_error: {:default, "unknown"})
-        field(:level, compute: :get_level, on_error: {:default, 1})
-        field(:verified, compute: :check_verified, on_error: :skip)
-        field(:full_name, compute: :get_full_name, on_error: :null)
+        field(:id, :number)
+        field(:name, :string)
+        field(:age, :integer, compute: :calculate_age, on_error: :null)
+        field(:status, :string, compute: :missing_function, on_error: {:default, "unknown"})
+        field(:level, :integer, compute: :get_level, on_error: {:default, 1})
+        field(:verified, :boolean, compute: :check_verified, on_error: :skip)
+        field(:full_name, :string, compute: :get_full_name, on_error: :null)
       end
 
       def calculate_age(_user, _opts) do
@@ -86,8 +86,8 @@ defmodule NbSerializer.ErrorHandlingTest do
           use NbSerializer.Serializer
 
           schema do
-            field(:id)
-            field(:computed, compute: :non_existent_function)
+            field(:id, :number)
+            field(:computed, :any, compute: :non_existent_function)
           end
         end
       end
@@ -99,8 +99,8 @@ defmodule NbSerializer.ErrorHandlingTest do
           use NbSerializer.Serializer
 
           schema do
-            field(:id)
-            field(:name, transform: :non_existent_transform)
+            field(:id, :number)
+            field(:name, :string, transform: :non_existent_transform)
           end
         end
       end
@@ -111,8 +111,8 @@ defmodule NbSerializer.ErrorHandlingTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:secret, if: :non_existent_condition)
+          field(:id, :number)
+          field(:secret, :string, if: :non_existent_condition)
         end
       end
 
@@ -129,8 +129,8 @@ defmodule NbSerializer.ErrorHandlingTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:name)
+          field(:id, :number)
+          field(:name, :string)
         end
       end
 
@@ -143,8 +143,8 @@ defmodule NbSerializer.ErrorHandlingTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:name)
+          field(:id, :number)
+          field(:name, :string)
         end
       end
 
@@ -162,8 +162,8 @@ defmodule NbSerializer.ErrorHandlingTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:pid, compute: :get_pid)
+          field(:id, :number)
+          field(:pid, :any, compute: :get_pid)
         end
 
         def get_pid(_data, _opts) do
@@ -190,7 +190,7 @@ defmodule NbSerializer.ErrorHandlingTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
+          field(:id, :number)
           # No serializer specified
           has_one(:profile)
         end
@@ -208,8 +208,8 @@ defmodule NbSerializer.ErrorHandlingTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:nested, compute: :get_nested)
+          field(:id, :number)
+          field(:nested, :any, compute: :get_nested)
         end
 
         def get_nested(data, _opts) do
@@ -228,8 +228,8 @@ defmodule NbSerializer.ErrorHandlingTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:name, transform: :always_nil)
+          field(:id, :number)
+          field(:name, :string, transform: :always_nil)
         end
 
         def always_nil(_value), do: nil
@@ -246,8 +246,8 @@ defmodule NbSerializer.ErrorHandlingTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:computed, compute: :raising_function)
+          field(:id, :number)
+          field(:computed, :any, compute: :raising_function)
         end
 
         def raising_function(_data, _opts) do
@@ -268,9 +268,9 @@ defmodule NbSerializer.ErrorHandlingTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:name)
-          field(:age)
+          field(:id, :number)
+          field(:name, :string)
+          field(:age, :integer)
         end
       end
 
@@ -289,8 +289,8 @@ defmodule NbSerializer.ErrorHandlingTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:name, from: "name")
+          field(:id, :number)
+          field(:name, :string, from: "name")
         end
       end
 

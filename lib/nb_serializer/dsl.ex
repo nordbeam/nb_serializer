@@ -121,10 +121,26 @@ defmodule NbSerializer.DSL do
       field :full_name, :string, compute: :build_full_name
       field :admin_notes, :string, if: :admin?
   """
-  # Original field macro without type (backward compatibility)
+  # Field without type - now raises a compile error to enforce type safety
   defmacro field(name) when is_atom(name) do
     quote do
-      @nb_serializer_fields {unquote(name), []}
+      raise CompileError,
+        file: __ENV__.file,
+        line: __ENV__.line,
+        description: """
+        Field #{inspect(unquote(name))} must specify a type.
+
+        All serializer fields require explicit types for TypeScript generation and type safety.
+
+        Examples:
+          field :#{unquote(name)}, :string
+          field :#{unquote(name)}, :number
+          field :#{unquote(name)}, :boolean
+          field :#{unquote(name)}, type: :string, nullable: true
+          field :#{unquote(name)}, type: ~TS"CustomType"
+
+        Available types: :string, :number, :integer, :boolean, :decimal, :uuid, :date, :datetime, :any
+        """
     end
   end
 
@@ -307,7 +323,11 @@ defmodule NbSerializer.DSL do
 
   ## Example
 
-      # Traditional approach with external serializer
+      # Shorthand with serializer module
+      has_one :author, AuthorSerializer
+      has_one :config, WidgetConfigSerializer
+
+      # Traditional approach with keyword options
       has_one :author, serializer: AuthorSerializer
       has_one :profile, serializer: ProfileSerializer, if: :include_profile?
 
@@ -318,9 +338,25 @@ defmodule NbSerializer.DSL do
         field :email
       end
   """
-  defmacro has_one(name, opts \\ []) do
+  # Single arity: has_one :profile (no serializer, passes through raw data)
+  defmacro has_one(name) do
+    quote do
+      @nb_serializer_relationships {:has_one, unquote(name), []}
+    end
+  end
+
+  # Keyword list: has_one :config, serializer: WidgetConfigSerializer
+  defmacro has_one(name, opts) when is_list(opts) do
     quote do
       @nb_serializer_relationships {:has_one, unquote(name), unquote(opts)}
+    end
+  end
+
+  # Shorthand: has_one :config, WidgetConfigSerializer
+  defmacro has_one(name, serializer_module) do
+    quote do
+      @nb_serializer_relationships {:has_one, unquote(name),
+                                    [serializer: unquote(serializer_module)]}
     end
   end
 
@@ -336,7 +372,11 @@ defmodule NbSerializer.DSL do
 
   ## Example
 
-      # Traditional approach with external serializer
+      # Shorthand with serializer module
+      has_many :comments, CommentSerializer
+      has_many :items, ItemSerializer
+
+      # Traditional approach with keyword options
       has_many :comments, serializer: CommentSerializer
       has_many :tags, serializer: TagSerializer, if: :include_tags?
 
@@ -347,9 +387,25 @@ defmodule NbSerializer.DSL do
         field :published
       end
   """
-  defmacro has_many(name, opts \\ []) do
+  # Single arity: has_many :comments (no serializer, passes through raw data)
+  defmacro has_many(name) do
+    quote do
+      @nb_serializer_relationships {:has_many, unquote(name), []}
+    end
+  end
+
+  # Keyword list: has_many :comments, serializer: CommentSerializer
+  defmacro has_many(name, opts) when is_list(opts) do
     quote do
       @nb_serializer_relationships {:has_many, unquote(name), unquote(opts)}
+    end
+  end
+
+  # Shorthand: has_many :comments, CommentSerializer
+  defmacro has_many(name, serializer_module) do
+    quote do
+      @nb_serializer_relationships {:has_many, unquote(name),
+                                    [serializer: unquote(serializer_module)]}
     end
   end
 
@@ -365,7 +421,11 @@ defmodule NbSerializer.DSL do
 
   ## Example
 
-      # Traditional approach
+      # Shorthand with serializer module
+      belongs_to :user, UserSerializer
+      belongs_to :organization, OrganizationSerializer
+
+      # Traditional approach with keyword options
       belongs_to :user, serializer: UserSerializer
 
       # Inline approach
@@ -374,9 +434,25 @@ defmodule NbSerializer.DSL do
         field :name
       end
   """
-  defmacro belongs_to(name, opts \\ []) do
+  # Single arity: belongs_to :user (no serializer, passes through raw data)
+  defmacro belongs_to(name) do
+    quote do
+      @nb_serializer_relationships {:has_one, unquote(name), []}
+    end
+  end
+
+  # Keyword list: belongs_to :user, serializer: UserSerializer
+  defmacro belongs_to(name, opts) when is_list(opts) do
     quote do
       @nb_serializer_relationships {:has_one, unquote(name), unquote(opts)}
+    end
+  end
+
+  # Shorthand: belongs_to :user, UserSerializer
+  defmacro belongs_to(name, serializer_module) do
+    quote do
+      @nb_serializer_relationships {:has_one, unquote(name),
+                                    [serializer: unquote(serializer_module)]}
     end
   end
 end

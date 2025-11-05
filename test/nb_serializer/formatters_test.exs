@@ -6,18 +6,18 @@ defmodule NbSerializer.FormattersTest do
       use NbSerializer.Serializer
 
       schema do
-        field(:id)
-        field(:price, format: :currency)
-        field(:price_usd, from: :price, format: {:currency, "$"})
-        field(:price_eur, from: :price, format: {:currency, "€"})
-        field(:created_at, format: :iso8601)
-        field(:updated_at, format: {:datetime, "%Y-%m-%d %H:%M:%S"})
-        field(:percentage, format: {:number, precision: 2})
-        field(:rating, format: {:number, precision: 1})
-        field(:is_active, format: :boolean)
-        field(:status, format: :downcase)
-        field(:title, format: :upcase)
-        field(:slug, format: :parameterize)
+        field(:id, :number)
+        field(:price, :any, format: :currency)
+        field(:price_usd, :any, from: :price, format: {:currency, "$"})
+        field(:price_eur, :any, from: :price, format: {:currency, "€"})
+        field(:created_at, :any, format: :iso8601)
+        field(:updated_at, :any, format: {:datetime, "%Y-%m-%d %H:%M:%S"})
+        field(:percentage, :any, format: {:number, precision: 2})
+        field(:rating, :any, format: {:number, precision: 1})
+        field(:is_active, :any, format: :boolean)
+        field(:status, :any, format: :downcase)
+        field(:title, :any, format: :upcase)
+        field(:slug, :any, format: :parameterize)
       end
     end
 
@@ -113,11 +113,11 @@ defmodule NbSerializer.FormattersTest do
       use NbSerializer.Serializer
 
       schema do
-        field(:id)
-        field(:name)
-        field(:email, format: :mask_email)
-        field(:phone, format: :format_phone)
-        field(:amount, format: {:custom_currency, precision: 2, symbol: "USD"})
+        field(:id, :number)
+        field(:name, :string)
+        field(:email, :string, format: :mask_email)
+        field(:phone, :string, format: :format_phone)
+        field(:amount, :any, format: {:custom_currency, precision: 2, symbol: "USD"})
       end
 
       def mask_email(email) when is_binary(email) do
@@ -176,9 +176,9 @@ defmodule NbSerializer.FormattersTest do
       use NbSerializer.Serializer
 
       schema do
-        field(:id)
-        field(:price, transform: :cents_to_dollars, format: :currency)
-        field(:score, transform: :normalize_score, format: {:number, precision: 1})
+        field(:id, :number)
+        field(:price, :any, transform: :cents_to_dollars, format: :currency)
+        field(:score, :any, transform: :normalize_score, format: {:number, precision: 1})
       end
 
       def cents_to_dollars(cents) when is_integer(cents) do
@@ -211,9 +211,9 @@ defmodule NbSerializer.FormattersTest do
       use NbSerializer.Serializer
 
       schema do
-        field(:id)
-        field(:date, format: :iso8601, on_error: :null)
-        field(:amount, format: :currency, on_error: {:default, "N/A"})
+        field(:id, :number)
+        field(:date, :any, format: :iso8601, on_error: :null)
+        field(:amount, :any, format: :currency, on_error: {:default, "N/A"})
       end
     end
 

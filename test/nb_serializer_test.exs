@@ -12,8 +12,8 @@ defmodule NbSerializerTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:name)
+          field(:id, :number)
+          field(:name, :string)
         end
       end
 
@@ -28,8 +28,8 @@ defmodule NbSerializerTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:name)
+          field(:id, :number)
+          field(:name, :string)
         end
       end
 
@@ -44,8 +44,8 @@ defmodule NbSerializerTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:title)
+          field(:id, :number)
+          field(:title, :string)
         end
       end
 
@@ -67,9 +67,9 @@ defmodule NbSerializerTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:name)
-          field(:email)
+          field(:id, :number)
+          field(:name, :string)
+          field(:email, :string)
         end
       end
 
@@ -86,8 +86,8 @@ defmodule NbSerializerTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:name)
+          field(:id, :number)
+          field(:name, :string)
         end
       end
 
@@ -104,8 +104,8 @@ defmodule NbSerializerTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:name)
+          field(:id, :number)
+          field(:name, :string)
         end
       end
 
@@ -122,10 +122,10 @@ defmodule NbSerializerTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:name)
-          field(:email)
-          field(:created_at)
+          field(:id, :number)
+          field(:name, :string)
+          field(:email, :string)
+          field(:created_at, :datetime)
         end
       end
 
@@ -152,9 +152,9 @@ defmodule NbSerializerTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:full_name, from: :name)
-          field(:created_timestamp, from: :created_at)
+          field(:id, :number)
+          field(:full_name, :string, from: :name)
+          field(:created_timestamp, :datetime, from: :created_at)
         end
       end
 
@@ -178,9 +178,9 @@ defmodule NbSerializerTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:status, default: "active")
-          field(:role, default: "user")
+          field(:id, :number)
+          field(:status, :string, default: "active")
+          field(:role, :string, default: "user")
         end
       end
 
@@ -277,10 +277,10 @@ defmodule NbSerializerTest do
           use NbSerializer.Serializer
 
           schema do
-            field(:user_name)
-            field(:total_count)
-            field(:is_active)
-            field(:created_at)
+            field(:user_name, :string)
+            field(:total_count, :integer)
+            field(:is_active, :boolean)
+            field(:created_at, :string)
           end
         end
 
@@ -308,8 +308,8 @@ defmodule NbSerializerTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:user_name)
-          field(:total_count)
+          field(:user_name, :string)
+          field(:total_count, :integer)
         end
       end
 
@@ -334,8 +334,8 @@ defmodule NbSerializerTest do
           use NbSerializer.Serializer
 
           schema do
-            field(:user_name)
-            field(:email_address)
+            field(:user_name, :string)
+            field(:email_address, :string)
           end
         end
 
@@ -343,8 +343,8 @@ defmodule NbSerializerTest do
           use NbSerializer.Serializer
 
           schema do
-            field(:post_title)
-            field(:created_at)
+            field(:post_title, :string)
+            field(:created_at, :string)
             has_one(:post_author, serializer: NestedUserSerializer)
           end
         end

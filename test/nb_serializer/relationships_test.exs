@@ -7,8 +7,8 @@ defmodule NbSerializer.RelationshipsTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:name)
+          field(:id, :number)
+          field(:name, :string)
         end
       end
 
@@ -16,8 +16,8 @@ defmodule NbSerializer.RelationshipsTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:title)
+          field(:id, :number)
+          field(:title, :string)
           has_one(:author, serializer: AuthorSerializer)
         end
       end
@@ -42,8 +42,8 @@ defmodule NbSerializer.RelationshipsTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:name)
+          field(:id, :number)
+          field(:name, :string)
         end
       end
 
@@ -51,8 +51,8 @@ defmodule NbSerializer.RelationshipsTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:name)
+          field(:id, :number)
+          field(:name, :string)
           has_one(:category, serializer: CategorySerializer)
         end
       end
@@ -68,8 +68,8 @@ defmodule NbSerializer.RelationshipsTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:name)
+          field(:id, :number)
+          field(:name, :string)
         end
       end
 
@@ -77,8 +77,8 @@ defmodule NbSerializer.RelationshipsTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:title)
+          field(:id, :number)
+          field(:title, :string)
           has_one(:author, serializer: UserInfoSerializer, key: :written_by)
         end
       end
@@ -105,8 +105,8 @@ defmodule NbSerializer.RelationshipsTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:body)
+          field(:id, :number)
+          field(:body, :string)
         end
       end
 
@@ -114,8 +114,8 @@ defmodule NbSerializer.RelationshipsTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:title)
+          field(:id, :number)
+          field(:title, :string)
           has_many(:comments, serializer: CommentSerializer)
         end
       end
@@ -146,8 +146,8 @@ defmodule NbSerializer.RelationshipsTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:name)
+          field(:id, :number)
+          field(:name, :string)
         end
       end
 
@@ -155,8 +155,8 @@ defmodule NbSerializer.RelationshipsTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:title)
+          field(:id, :number)
+          field(:title, :string)
           has_many(:tags, serializer: TagSerializer)
         end
       end
@@ -172,8 +172,8 @@ defmodule NbSerializer.RelationshipsTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:name)
+          field(:id, :number)
+          field(:name, :string)
         end
       end
 
@@ -181,7 +181,7 @@ defmodule NbSerializer.RelationshipsTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
+          field(:id, :number)
           has_many(:items, serializer: ItemSerializer)
         end
       end
@@ -199,8 +199,8 @@ defmodule NbSerializer.RelationshipsTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:username)
+          field(:id, :number)
+          field(:username, :string)
         end
       end
 
@@ -208,8 +208,8 @@ defmodule NbSerializer.RelationshipsTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:text)
+          field(:id, :number)
+          field(:text, :string)
           has_one(:user, serializer: NestedUserSerializer)
         end
       end
@@ -218,8 +218,8 @@ defmodule NbSerializer.RelationshipsTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:title)
+          field(:id, :number)
+          field(:title, :string)
           has_one(:author, serializer: NestedUserSerializer)
           has_many(:comments, serializer: NestedCommentSerializer)
         end
@@ -271,8 +271,8 @@ defmodule NbSerializer.RelationshipsTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:name)
+          field(:id, :number)
+          field(:name, :string)
           has_one(:metadata, compute: :build_metadata)
         end
 

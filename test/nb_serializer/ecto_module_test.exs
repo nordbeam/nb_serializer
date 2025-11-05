@@ -107,9 +107,9 @@ defmodule NbSerializer.EctoModuleTest do
         use NbSerializer.Ecto
 
         schema do
-          field(:id)
-          field(:name)
-          field(:email)
+          field(:id, :number)
+          field(:name, :string)
+          field(:email, :string)
         end
       end
 
@@ -144,8 +144,8 @@ defmodule NbSerializer.EctoModuleTest do
         use NbSerializer.Ecto
 
         schema do
-          field(:id)
-          field(:name)
+          field(:id, :number)
+          field(:name, :string)
         end
       end
 

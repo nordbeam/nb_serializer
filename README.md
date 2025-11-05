@@ -6,6 +6,7 @@ A fast and declarative JSON serialization library for Elixir, inspired by Alba f
 
 - 🚀 **Compile-time optimizations** - DSL compiles to efficient runtime code
 - 🎯 **Declarative DSL** - Clean, readable serializer definitions
+- 🔒 **Type safety** - Explicit type annotations required for all fields with compile-time validation
 - 🔌 **Framework integration** - Built-in support for Phoenix, Ecto, and Plug
 - 🐫 **Automatic camelization** - Convert snake_case to camelCase for JavaScript/TypeScript (configurable)
 - 🔄 **Circular reference handling** - Smart detection and prevention of infinite loops
@@ -27,6 +28,8 @@ end
 
 ## Quick Start
 
+> **Important**: All fields must have explicit type annotations. Typeless fields will cause a compile-time error. This ensures type safety and enables TypeScript generation.
+
 ### Basic Serializer
 
 ```elixir
@@ -34,9 +37,9 @@ defmodule UserSerializer do
   use NbSerializer.Serializer
 
   schema do
-    field :id
-    field :name
-    field :email
+    field :id, :number
+    field :name, :string
+    field :email, :string
   end
 end
 
@@ -50,6 +53,45 @@ json = NbSerializer.to_json!(UserSerializer, user)
 # => "{\"id\":1,\"name\":\"John Doe\",\"email\":\"john@example.com\"}"
 ```
 
+## Field Types
+
+All fields require explicit type annotations. Available types:
+
+| Type | Description | Example |
+|------|-------------|---------|
+| `:string` | Text values | `field :name, :string` |
+| `:number` | Numeric values (int or float) | `field :id, :number` |
+| `:integer` | Integer values only | `field :count, :integer` |
+| `:boolean` | True/false values | `field :active, :boolean` |
+| `:decimal` | Decimal values | `field :price, :decimal` |
+| `:uuid` | UUID strings | `field :uuid, :uuid` |
+| `:date` | Date values | `field :birthday, :date` |
+| `:datetime` | DateTime values | `field :created_at, :datetime` |
+| `:any` | Dynamic/flexible content | `field :metadata, :any` |
+
+### Custom TypeScript Types
+
+For advanced TypeScript type generation, use the `~TS` sigil:
+
+```elixir
+field :config, type: ~TS"Record<string, any>"
+field :metadata, type: ~TS"{ enabled: boolean; count: number }"
+```
+
+### Type Modifiers
+
+```elixir
+# Nullable fields (can be null)
+field :email, :string, nullable: true
+
+# Optional fields (may be omitted from output)
+field :phone, :string, optional: true
+
+# List types
+field :tags, :string, list: true
+field :scores, :number, list: true
+```
+
 ## Automatic CamelCase Conversion
 
 NbSerializer automatically converts snake_case keys to camelCase to match JavaScript/TypeScript conventions (enabled by default):
@@ -59,10 +101,10 @@ defmodule UserSerializer do
   use NbSerializer.Serializer
 
   schema do
-    field :user_name
-    field :email_address
-    field :is_active
-    field :created_at
+    field :user_name, :string
+    field :email_address, :string
+    field :is_active, :boolean
+    field :created_at, :datetime
   end
 end
 
@@ -98,10 +140,10 @@ defmodule PostSerializer do
   use NbSerializer.Serializer
 
   schema do
-    field :id
-    field :title
-    field :excerpt, compute: :generate_excerpt
-    field :reading_time, compute: :calculate_reading_time
+    field :id, :number
+    field :title, :string
+    field :excerpt, :string, compute: :generate_excerpt
+    field :reading_time, :number, compute: :calculate_reading_time
   end
 
   def generate_excerpt(%{body: body}, _opts) do
@@ -122,9 +164,9 @@ defmodule BlogSerializer do
   use NbSerializer.Serializer
 
   schema do
-    field :id
-    field :title
-    field :body
+    field :id, :number
+    field :title, :string
+    field :body, :string
 
     has_one :author, serializer: AuthorSerializer
     has_many :comments, serializer: CommentSerializer
@@ -144,11 +186,11 @@ defmodule UserDetailSerializer do
   use NbSerializer.Serializer
 
   schema do
-    field :id
-    field :name
-    field :email, if: :show_email?
-    field :admin_notes, if: :is_admin?
-    field :private_data, unless: :is_public_view?
+    field :id, :number
+    field :name, :string
+    field :email, :string, if: :show_email?
+    field :admin_notes, :string, if: :is_admin?
+    field :private_data, :string, unless: :is_public_view?
   end
 
   def show_email?(_user, opts) do
@@ -172,11 +214,11 @@ defmodule ProductSerializer do
   use NbSerializer.Serializer
 
   schema do
-    field :id
-    field :name, transform: :titleize
-    field :price, format: :currency
-    field :created_at, format: :iso8601
-    field :sku, transform: :upcase_sku
+    field :id, :number
+    field :name, :string, transform: :titleize
+    field :price, :number, format: :currency
+    field :created_at, :datetime, format: :iso8601
+    field :sku, :string, transform: :upcase_sku
   end
 
   def titleize(value) do
@@ -304,9 +346,9 @@ defmodule PostWithEctoSerializer do
   use NbSerializer.Serializer
 
   schema do
-    field :id
-    field :title
-    field :body
+    field :id, :number
+    field :title, :string
+    field :body, :string
 
     # Only serialize if association is loaded
     has_one :author, serializer: AuthorSerializer, if: :author_loaded?
@@ -329,13 +371,13 @@ defmodule SafeSerializer do
   use NbSerializer.Serializer
 
   schema do
-    field :id
-    field :name
+    field :id, :number
+    field :name, :string
     # Handle errors gracefully
-    field :risky_field, compute: :compute_risky, on_error: :null  # Returns nil on error
-    field :important_field, compute: :compute_important, on_error: {:default, "N/A"}  # Returns default value
-    field :skippable_field, compute: :compute_skippable, on_error: :skip  # Omits field from output
-    field :critical_field, compute: :compute_critical, on_error: :reraise  # Raises SerializationError with context
+    field :risky_field, :string, compute: :compute_risky, on_error: :null  # Returns nil on error
+    field :important_field, :string, compute: :compute_important, on_error: {:default, "N/A"}  # Returns default value
+    field :skippable_field, :string, compute: :compute_skippable, on_error: :skip  # Omits field from output
+    field :critical_field, :string, compute: :compute_critical, on_error: :reraise  # Raises SerializationError with context
   end
 
   def compute_risky(_data, _opts) do

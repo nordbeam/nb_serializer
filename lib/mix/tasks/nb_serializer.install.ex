@@ -258,23 +258,23 @@ if Code.ensure_loaded?(Igniter.Mix.Task) do
 
       schema do
         # Basic fields - directly map from source data
-        field :id
-        field :title
+        field :id, :number
+        field :title, :string
 
         # Computed field - derives value from source data
         # The compute function receives the data and opts
-        field :excerpt, compute: :generate_excerpt
+        field :excerpt, :string, compute: :generate_excerpt
 
         # Conditional field - only included when condition is met
         # Useful for admin-only fields, permission-based data, etc.
-        field :author_id, if: :show_author_id?
+        field :author_id, :number, if: :show_author_id?
 
         # Field with transformation
         # Format DateTime to ISO8601 string
-        field :published_at, transform: &format_datetime/1
+        field :published_at, :datetime, transform: &format_datetime/1
 
         # Computed field with pattern matching
-        field :status_label, compute: :format_status
+        field :status_label, :string, compute: :format_status
       #{ecto_association}
       end
 
@@ -344,9 +344,9 @@ if Code.ensure_loaded?(Igniter.Mix.Task) do
            use NbSerializer.Serializer
 
            schema do
-             field :id
-             field :name
-             field :email
+             field :id, :number
+             field :name, :string
+             field :email, :string
            end
          end
 

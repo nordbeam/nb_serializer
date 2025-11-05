@@ -68,10 +68,10 @@ defmodule NbSerializer.EctoTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:name)
-          field(:email)
-          field(:inserted_at)
+          field(:id, :number)
+          field(:name, :string)
+          field(:email, :string)
+          field(:inserted_at, :datetime)
         end
       end
 
@@ -101,8 +101,8 @@ defmodule NbSerializer.EctoTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:title)
+          field(:id, :number)
+          field(:title, :string)
           has_one(:user, serializer: UserEctoSerializer)
         end
       end
@@ -111,8 +111,8 @@ defmodule NbSerializer.EctoTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:name)
+          field(:id, :number)
+          field(:name, :string)
         end
       end
 
@@ -142,9 +142,9 @@ defmodule NbSerializer.EctoTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:bio)
-          field(:website)
+          field(:id, :number)
+          field(:bio, :string)
+          field(:website, :string)
         end
       end
 
@@ -152,8 +152,8 @@ defmodule NbSerializer.EctoTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:name)
+          field(:id, :number)
+          field(:name, :string)
           has_one(:profile, serializer: ProfileSerializer)
         end
       end
@@ -187,9 +187,9 @@ defmodule NbSerializer.EctoTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:body)
-          field(:approved)
+          field(:id, :number)
+          field(:body, :string)
+          field(:approved, :boolean)
         end
       end
 
@@ -197,9 +197,9 @@ defmodule NbSerializer.EctoTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:title)
-          field(:body)
+          field(:id, :number)
+          field(:title, :string)
+          field(:body, :string)
           has_many(:comments, serializer: CommentSerializer)
         end
       end
@@ -232,9 +232,9 @@ defmodule NbSerializer.EctoTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:title)
-          field(:full_title, compute: :build_full_title)
+          field(:id, :number)
+          field(:title, :string)
+          field(:full_title, :string, compute: :build_full_title)
         end
 
         def build_full_title(post, _opts) do
@@ -262,9 +262,9 @@ defmodule NbSerializer.EctoTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:name)
-          field(:email)
+          field(:id, :number)
+          field(:name, :string)
+          field(:email, :string)
         end
       end
 
@@ -290,9 +290,9 @@ defmodule NbSerializer.EctoTest do
         use NbSerializer.Ecto
 
         schema do
-          field(:id)
-          field(:name)
-          field(:email)
+          field(:id, :number)
+          field(:name, :string)
+          field(:email, :string)
         end
       end
 
@@ -318,8 +318,8 @@ defmodule NbSerializer.EctoTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:body)
+          field(:id, :number)
+          field(:body, :string)
         end
       end
 
@@ -327,8 +327,8 @@ defmodule NbSerializer.EctoTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:title)
+          field(:id, :number)
+          field(:title, :string)
 
           has_many(:comments,
             serializer: ConditionalCommentSerializer,

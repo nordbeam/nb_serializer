@@ -18,16 +18,16 @@ defmodule NbSerializer.CircularReferenceTest do
       defmodule BasicBookSerializer do
         use NbSerializer.Serializer
 
-        field(:id)
-        field(:title)
+        field(:id, :number)
+        field(:title, :string)
         has_one(:author, serializer: NbSerializer.CircularReferenceTest.BasicAuthorSerializer)
       end
 
       defmodule BasicAuthorSerializer do
         use NbSerializer.Serializer
 
-        field(:id)
-        field(:name)
+        field(:id, :number)
+        field(:name, :string)
         has_many(:books, serializer: NbSerializer.CircularReferenceTest.BasicBookSerializer)
       end
 
@@ -55,16 +55,16 @@ defmodule NbSerializer.CircularReferenceTest do
       defmodule BookSerializerWithin do
         use NbSerializer.Serializer
 
-        field(:id)
-        field(:title)
+        field(:id, :number)
+        field(:title, :string)
         has_one(:author, serializer: NbSerializer.CircularReferenceTest.AuthorSerializerWithin)
       end
 
       defmodule AuthorSerializerWithin do
         use NbSerializer.Serializer
 
-        field(:id)
-        field(:name)
+        field(:id, :number)
+        field(:name, :string)
         has_many(:books, serializer: NbSerializer.CircularReferenceTest.BookSerializerWithin)
       end
 
@@ -101,8 +101,8 @@ defmodule NbSerializer.CircularReferenceTest do
       defmodule ComplexBookSerializer do
         use NbSerializer.Serializer
 
-        field(:id)
-        field(:title)
+        field(:id, :number)
+        field(:title, :string)
         has_one(:author, serializer: NbSerializer.CircularReferenceTest.ComplexAuthorSerializer)
         has_one(:publisher, serializer: NbSerializer.CircularReferenceTest.PublisherSerializer)
 
@@ -114,16 +114,16 @@ defmodule NbSerializer.CircularReferenceTest do
       defmodule ComplexAuthorSerializer do
         use NbSerializer.Serializer
 
-        field(:id)
-        field(:name)
+        field(:id, :number)
+        field(:name, :string)
         has_many(:books, serializer: NbSerializer.CircularReferenceTest.ComplexBookSerializer)
       end
 
       defmodule PublisherSerializer do
         use NbSerializer.Serializer
 
-        field(:id)
-        field(:name)
+        field(:id, :number)
+        field(:name, :string)
         has_many(:books, serializer: NbSerializer.CircularReferenceTest.ComplexBookSerializer)
       end
 
@@ -217,8 +217,8 @@ defmodule NbSerializer.CircularReferenceTest do
       defmodule ListBookSerializer do
         use NbSerializer.Serializer
 
-        field(:id)
-        field(:title)
+        field(:id, :number)
+        field(:title, :string)
         has_one(:author, serializer: NbSerializer.CircularReferenceTest.ListAuthorSerializer)
 
         has_many(:related_books,
@@ -229,8 +229,8 @@ defmodule NbSerializer.CircularReferenceTest do
       defmodule ListAuthorSerializer do
         use NbSerializer.Serializer
 
-        field(:id)
-        field(:name)
+        field(:id, :number)
+        field(:name, :string)
         has_many(:books, serializer: NbSerializer.CircularReferenceTest.ListBookSerializer)
       end
 
@@ -281,16 +281,16 @@ defmodule NbSerializer.CircularReferenceTest do
       defmodule DepthBookSerializer do
         use NbSerializer.Serializer
 
-        field(:id)
-        field(:title)
+        field(:id, :number)
+        field(:title, :string)
         has_one(:author, serializer: NbSerializer.CircularReferenceTest.DepthAuthorSerializer)
       end
 
       defmodule DepthAuthorSerializer do
         use NbSerializer.Serializer
 
-        field(:id)
-        field(:name)
+        field(:id, :number)
+        field(:name, :string)
         has_many(:books, serializer: NbSerializer.CircularReferenceTest.DepthBookSerializer)
       end
 
@@ -334,8 +334,8 @@ defmodule NbSerializer.CircularReferenceTest do
       defmodule ConditionalBookSerializer do
         use NbSerializer.Serializer
 
-        field(:id)
-        field(:title)
+        field(:id, :number)
+        field(:title, :string)
 
         has_one(:author,
           serializer: NbSerializer.CircularReferenceTest.ConditionalAuthorSerializer,
@@ -350,8 +350,8 @@ defmodule NbSerializer.CircularReferenceTest do
       defmodule ConditionalAuthorSerializer do
         use NbSerializer.Serializer
 
-        field(:id)
-        field(:name)
+        field(:id, :number)
+        field(:name, :string)
 
         has_many(:books,
           serializer: NbSerializer.CircularReferenceTest.ConditionalBookSerializer,

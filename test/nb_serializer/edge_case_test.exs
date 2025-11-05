@@ -6,8 +6,8 @@ defmodule NbSerializer.EdgeCaseTest do
       defmodule NilSerializer do
         use NbSerializer.Serializer
 
-        field(:id)
-        field(:name)
+        field(:id, :number)
+        field(:name, :string)
       end
 
       assert {:ok, result} = NbSerializer.serialize(NilSerializer, nil)
@@ -18,8 +18,8 @@ defmodule NbSerializer.EdgeCaseTest do
       defmodule ListNilSerializer do
         use NbSerializer.Serializer
 
-        field(:id)
-        field(:name)
+        field(:id, :number)
+        field(:name, :string)
       end
 
       assert {:ok, result} = NbSerializer.serialize(ListNilSerializer, [nil, %{id: 1}, nil])
@@ -35,9 +35,9 @@ defmodule NbSerializer.EdgeCaseTest do
       defmodule MissingFieldSerializer do
         use NbSerializer.Serializer
 
-        field(:id)
-        field(:name)
-        field(:email)
+        field(:id, :number)
+        field(:name, :string)
+        field(:email, :string)
       end
 
       # missing name and email
@@ -52,8 +52,8 @@ defmodule NbSerializer.EdgeCaseTest do
       defmodule MissingComputeNullSerializer do
         use NbSerializer.Serializer
 
-        field(:id)
-        field(:computed_field, compute: :non_existent_function, on_error: :null)
+        field(:id, :number)
+        field(:computed_field, :any, compute: :non_existent_function, on_error: :null)
       end
 
       data = %{id: 1}
@@ -65,8 +65,8 @@ defmodule NbSerializer.EdgeCaseTest do
       defmodule MissingComputeSkipSerializer do
         use NbSerializer.Serializer
 
-        field(:id)
-        field(:computed_field, compute: :non_existent_function, on_error: :skip)
+        field(:id, :number)
+        field(:computed_field, :any, compute: :non_existent_function, on_error: :skip)
       end
 
       data = %{id: 1}
@@ -78,9 +78,9 @@ defmodule NbSerializer.EdgeCaseTest do
       defmodule MissingComputeDefaultSerializer do
         use NbSerializer.Serializer
 
-        field(:id)
+        field(:id, :number)
 
-        field(:computed_field,
+        field(:computed_field, :string,
           compute: :non_existent_function,
           on_error: {:default, "default_value"}
         )
@@ -97,8 +97,8 @@ defmodule NbSerializer.EdgeCaseTest do
         defmodule MissingComputeErrorSerializer do
           use NbSerializer.Serializer
 
-          field(:id)
-          field(:computed_field, compute: :non_existent_function)
+          field(:id, :number)
+          field(:computed_field, :any, compute: :non_existent_function)
         end
       end
     end
@@ -109,7 +109,7 @@ defmodule NbSerializer.EdgeCaseTest do
       defmodule TransformAritySerializer do
         use NbSerializer.Serializer
 
-        field(:name, transform: :upcase_name)
+        field(:name, :string, transform: :upcase_name)
 
         def upcase_name(value), do: String.upcase(value || "")
       end
@@ -123,7 +123,7 @@ defmodule NbSerializer.EdgeCaseTest do
       defmodule TransformNilSerializer do
         use NbSerializer.Serializer
 
-        field(:name, transform: :safe_upcase)
+        field(:name, :string, transform: :safe_upcase)
 
         def safe_upcase(nil), do: nil
         def safe_upcase(value), do: String.upcase(value)
@@ -140,7 +140,7 @@ defmodule NbSerializer.EdgeCaseTest do
       defmodule SafeAccessSerializer do
         use NbSerializer.Serializer
 
-        field(:post_count, compute: :calculate_post_count)
+        field(:post_count, :integer, compute: :calculate_post_count)
 
         def calculate_post_count(user, _opts) do
           posts = Map.get(user, :posts, [])
@@ -158,7 +158,7 @@ defmodule NbSerializer.EdgeCaseTest do
       defmodule ErrorComputeSerializer do
         use NbSerializer.Serializer
 
-        field(:bad_field, compute: :will_crash, on_error: :null)
+        field(:bad_field, :any, compute: :will_crash, on_error: :null)
 
         def will_crash(data, _opts) do
           # This will cause KeyError
@@ -176,15 +176,15 @@ defmodule NbSerializer.EdgeCaseTest do
     test "serializes computed has_many associations" do
       defmodule CommentSerializer do
         use NbSerializer.Serializer
-        field(:id)
-        field(:text)
+        field(:id, :number)
+        field(:text, :string)
       end
 
       defmodule PostWithComputedSerializer do
         use NbSerializer.Serializer
 
-        field(:id)
-        field(:title)
+        field(:id, :number)
+        field(:title, :string)
 
         has_many(:recent_comments,
           serializer: CommentSerializer,
@@ -222,14 +222,14 @@ defmodule NbSerializer.EdgeCaseTest do
     test "serializes computed has_one association" do
       defmodule AuthorSerializer do
         use NbSerializer.Serializer
-        field(:id)
-        field(:name)
+        field(:id, :number)
+        field(:name, :string)
       end
 
       defmodule PostWithComputedOneSerializer do
         use NbSerializer.Serializer
 
-        field(:id)
+        field(:id, :number)
 
         has_one(:primary_author,
           serializer: AuthorSerializer,
@@ -261,13 +261,13 @@ defmodule NbSerializer.EdgeCaseTest do
     test "handles nil in computed associations" do
       defmodule NilAssocSerializer do
         use NbSerializer.Serializer
-        field(:id)
+        field(:id, :number)
       end
 
       defmodule MainWithNilSerializer do
         use NbSerializer.Serializer
 
-        field(:id)
+        field(:id, :number)
 
         has_one(:related,
           serializer: NilAssocSerializer,
@@ -287,7 +287,7 @@ defmodule NbSerializer.EdgeCaseTest do
       defmodule DateTimeFormatterSerializer do
         use NbSerializer.Serializer
 
-        field(:created_at, format: :datetime)
+        field(:created_at, :datetime, format: :datetime)
       end
 
       data = %{created_at: ~U[2024-01-15 10:30:00Z]}
@@ -299,7 +299,7 @@ defmodule NbSerializer.EdgeCaseTest do
       defmodule DateFormatterSerializer do
         use NbSerializer.Serializer
 
-        field(:birth_date, format: :date)
+        field(:birth_date, :date, format: :date)
       end
 
       data = %{birth_date: ~D[2024-01-15]}
@@ -311,7 +311,7 @@ defmodule NbSerializer.EdgeCaseTest do
       defmodule CurrencyFormatterSerializer do
         use NbSerializer.Serializer
 
-        field(:price, format: :currency)
+        field(:price, :number, format: :currency)
       end
 
       data = %{price: 19.99}
@@ -323,7 +323,7 @@ defmodule NbSerializer.EdgeCaseTest do
       defmodule NilFormatterSerializer do
         use NbSerializer.Serializer
 
-        field(:price, format: :currency)
+        field(:price, :number, format: :currency)
       end
 
       data = %{price: nil}
@@ -337,8 +337,8 @@ defmodule NbSerializer.EdgeCaseTest do
       defmodule NodeSerializer do
         use NbSerializer.Serializer
 
-        field(:id)
-        field(:name)
+        field(:id, :number)
+        field(:name, :string)
         has_one(:parent, serializer: __MODULE__)
         has_many(:children, serializer: __MODULE__)
       end
@@ -365,7 +365,7 @@ defmodule NbSerializer.EdgeCaseTest do
       defmodule StrictFieldSerializer do
         use NbSerializer.Serializer
 
-        field(:required_field, compute: :get_required)
+        field(:required_field, :any, compute: :get_required)
 
         def get_required(data, _opts) do
           # This should cause an error if field doesn't exist
@@ -398,7 +398,7 @@ defmodule NbSerializer.EdgeCaseTest do
         defmodule InvalidComputeSerializer do
           use NbSerializer.Serializer
 
-          field(:computed, compute: :function_that_does_not_exist)
+          field(:computed, :any, compute: :function_that_does_not_exist)
         end
       end
     end

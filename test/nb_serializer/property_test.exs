@@ -10,9 +10,9 @@ defmodule NbSerializer.PropertyTest do
       defmodule TestIdempotentSerializer do
         use NbSerializer.Serializer
 
-        field(:id)
-        field(:name)
-        field(:value)
+        field(:id, :number)
+        field(:name, :string)
+        field(:value, :any)
       end
 
       {:ok, result1} = NbSerializer.serialize(TestIdempotentSerializer, data)
@@ -30,10 +30,10 @@ defmodule NbSerializer.PropertyTest do
       defmodule TestNilHandlingSerializer do
         use NbSerializer.Serializer
 
-        field(:id)
-        field(:name)
-        field(:value)
-        field(:status)
+        field(:id, :number)
+        field(:name, :string)
+        field(:value, :any)
+        field(:status, :string)
       end
 
       {:ok, result} = NbSerializer.serialize(TestNilHandlingSerializer, data)
@@ -54,7 +54,7 @@ defmodule NbSerializer.PropertyTest do
     defmodule TestDefaultValueSerializer do
       use NbSerializer.Serializer
 
-      field(:test_field, default: "default_value")
+      field(:test_field, :string, default: "default_value")
     end
 
     data = %{}
@@ -71,7 +71,7 @@ defmodule NbSerializer.PropertyTest do
       defmodule TestTransformAppliedSerializer do
         use NbSerializer.Serializer
 
-        field(:test_field, transform: :upcase_transform)
+        field(:test_field, :string, transform: :upcase_transform)
 
         def upcase_transform(value) when is_binary(value) do
           String.upcase(value)
@@ -95,8 +95,8 @@ defmodule NbSerializer.PropertyTest do
       defmodule TestListSerializer do
         use NbSerializer.Serializer
 
-        field(:id)
-        field(:name)
+        field(:id, :number)
+        field(:name, :string)
       end
 
       {:ok, result} = NbSerializer.serialize(TestListSerializer, items)
@@ -115,7 +115,7 @@ defmodule NbSerializer.PropertyTest do
       defmodule TestConditionalFieldSerializer do
         use NbSerializer.Serializer
 
-        field(:conditional_field, if: :should_include?)
+        field(:conditional_field, :any, if: :should_include?)
 
         def should_include?(_data, opts) do
           Keyword.get(opts, :include_field, false)
@@ -143,8 +143,8 @@ defmodule NbSerializer.PropertyTest do
       defmodule TestErrorSerializer do
         use NbSerializer.Serializer
 
-        field(:safe_field)
-        field(:error_field, compute: :compute_error)
+        field(:safe_field, :any)
+        field(:error_field, :any, compute: :compute_error)
 
         def compute_error(_data, _opts) do
           raise "Intentional error"
@@ -166,8 +166,8 @@ defmodule NbSerializer.PropertyTest do
       defmodule TestRootSerializer do
         use NbSerializer.Serializer
 
-        field(:id)
-        field(:name)
+        field(:id, :number)
+        field(:name, :string)
       end
 
       {:ok, result} = NbSerializer.serialize(TestRootSerializer, data, root: root_key)
@@ -186,8 +186,8 @@ defmodule NbSerializer.PropertyTest do
       defmodule TestMetaSerializer do
         use NbSerializer.Serializer
 
-        field(:id)
-        field(:name)
+        field(:id, :number)
+        field(:name, :string)
       end
 
       {:ok, result} = NbSerializer.serialize(TestMetaSerializer, data, meta: meta)

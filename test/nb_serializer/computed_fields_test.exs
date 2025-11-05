@@ -7,8 +7,8 @@ defmodule NbSerializer.ComputedFieldsTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:display_name, compute: :format_name)
+          field(:id, :number)
+          field(:display_name, :string, compute: :format_name)
         end
 
         def format_name(user, _opts) do
@@ -27,8 +27,8 @@ defmodule NbSerializer.ComputedFieldsTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:full_name, compute: :build_full_name)
+          field(:id, :number)
+          field(:full_name, :string, compute: :build_full_name)
         end
 
         def build_full_name(user, _opts) do
@@ -47,8 +47,8 @@ defmodule NbSerializer.ComputedFieldsTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:status_label, compute: :format_status)
+          field(:id, :number)
+          field(:status_label, :string, compute: :format_status)
         end
 
         def format_status(%{status: "pending"}, _opts), do: "Awaiting Approval"
@@ -79,8 +79,8 @@ defmodule NbSerializer.ComputedFieldsTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:greeting, compute: :build_greeting)
+          field(:id, :number)
+          field(:greeting, :string, compute: :build_greeting)
         end
 
         def build_greeting(user, opts) do
@@ -119,8 +119,8 @@ defmodule NbSerializer.ComputedFieldsTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:metadata, compute: :build_metadata)
+          field(:id, :number)
+          field(:metadata, :any, compute: :build_metadata)
         end
 
         def build_metadata(product, _opts) do
@@ -156,9 +156,9 @@ defmodule NbSerializer.ComputedFieldsTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:price, compute: :calculate_price, transform: :round_price)
-          field(:tags, transform: :sort_tags)
+          field(:id, :number)
+          field(:price, :any, compute: :calculate_price, transform: :round_price)
+          field(:tags, :string, list: true, transform: :sort_tags)
         end
 
         def calculate_price(item, _opts) do

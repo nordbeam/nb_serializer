@@ -126,21 +126,21 @@ defmodule NbSerializer.DSLTypelizerTest do
       use NbSerializer.Serializer
 
       schema do
-        field(:id)
-        field(:name, compute: :format_name)
-        field(:admin?, if: :is_admin)
+        field(:id, :number)
+        field(:name, :string, compute: :format_name)
+        field(:admin?, :boolean, if: :is_admin)
       end
 
       def format_name(data, _opts), do: data.name
       def is_admin(data, _opts), do: data.admin
     end
 
-    test "maintains backwards compatibility without types" do
+    test "enforces explicit types on all fields" do
       fields = BackwardsCompatSerializer.__nb_serializer_fields__()
 
-      assert {:id, []} in fields
-      assert {:name, [compute: :format_name]} in fields
-      assert {:admin?, [if: :is_admin]} in fields
+      assert {:id, [type: :number]} in fields
+      assert {:name, [type: :string, compute: :format_name]} in fields
+      assert {:admin?, [type: :boolean, if: :is_admin]} in fields
     end
   end
 

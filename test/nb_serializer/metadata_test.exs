@@ -5,8 +5,8 @@ defmodule NbSerializer.MetadataTest do
     use NbSerializer.Serializer
 
     schema do
-      field(:id)
-      field(:name)
+      field(:id, :number)
+      field(:name, :string)
     end
   end
 

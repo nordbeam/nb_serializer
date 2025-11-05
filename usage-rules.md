@@ -23,9 +23,9 @@ defmodule UserSerializer do
   use NbSerializer.Serializer
 
   schema do
-    field :id
-    field :name
-    field :email
+    field :id, :number
+    field :name, :string
+    field :email, :string
   end
 end
 ```
@@ -49,8 +49,8 @@ json = NbSerializer.to_json!(UserSerializer, user)
 ### Computed Fields
 ```elixir
 schema do
-  field :id
-  field :full_name, compute: :build_full_name
+  field :id, :number
+  field :full_name, :string, compute: :build_full_name
 end
 
 def build_full_name(%{first: first, last: last}, _opts), do: "#{first} #{last}"
@@ -58,8 +58,8 @@ def build_full_name(%{first: first, last: last}, _opts), do: "#{first} #{last}"
 
 ### Conditional Fields
 ```elixir
-field :email, if: :show_email?
-field :private_data, unless: :is_public?
+field :email, :string, if: :show_email?
+field :private_data, :string, unless: :is_public?
 
 def show_email?(_data, opts), do: opts[:current_user] != nil
 ```
@@ -72,8 +72,8 @@ has_many :comments, serializer: CommentSerializer, if: :include_comments?
 
 ### Field Transformations
 ```elixir
-field :name, transform: :upcase_name
-field :created_at, format: :iso8601
+field :name, :string, transform: :upcase_name
+field :created_at, :datetime, format: :iso8601
 
 def upcase_name(value), do: String.upcase(value)
 ```

@@ -7,9 +7,9 @@ defmodule NbSerializer.PlugTest do
     use NbSerializer.Serializer
 
     schema do
-      field(:id)
-      field(:name)
-      field(:email)
+      field(:id, :number)
+      field(:name, :string)
+      field(:email, :string)
     end
   end
 
@@ -17,9 +17,9 @@ defmodule NbSerializer.PlugTest do
     use NbSerializer.Serializer
 
     schema do
-      field(:id)
-      field(:title)
-      field(:body)
+      field(:id, :number)
+      field(:title, :string)
+      field(:body, :string)
     end
   end
 

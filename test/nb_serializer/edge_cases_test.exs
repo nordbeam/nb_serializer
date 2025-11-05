@@ -7,8 +7,8 @@ defmodule NbSerializer.EdgeCasesTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:name)
+          field(:id, :number)
+          field(:name, :string)
           has_one(:best_friend, serializer: __MODULE__)
         end
       end
@@ -33,10 +33,10 @@ defmodule NbSerializer.EdgeCasesTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:risky_compute, compute: :might_fail, on_error: :null)
-          field(:with_default, compute: :might_fail, on_error: {:default, "fallback"})
-          field(:with_handler, compute: :might_fail, on_error: :handle_error)
+          field(:id, :number)
+          field(:risky_compute, :string, compute: :might_fail, on_error: :null)
+          field(:with_default, :string, compute: :might_fail, on_error: {:default, "fallback"})
+          field(:with_handler, :string, compute: :might_fail, on_error: :handle_error)
         end
 
         def might_fail(%{should_fail: true}, _opts) do
@@ -76,8 +76,8 @@ defmodule NbSerializer.EdgeCasesTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:title)
+          field(:id, :number)
+          field(:title, :string)
 
           has_one(:author,
             serializer: NbSerializer.EdgeCasesTest.UserSerializer,
@@ -95,8 +95,8 @@ defmodule NbSerializer.EdgeCasesTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:name)
+          field(:id, :number)
+          field(:name, :string)
         end
       end
 
@@ -104,8 +104,8 @@ defmodule NbSerializer.EdgeCasesTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:name)
+          field(:id, :number)
+          field(:name, :string)
         end
       end
 
@@ -149,8 +149,8 @@ defmodule NbSerializer.EdgeCasesTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:deep_value, compute: :extract_deep)
+          field(:id, :number)
+          field(:deep_value, :string, compute: :extract_deep)
         end
 
         def extract_deep(data, _opts) do
@@ -178,10 +178,10 @@ defmodule NbSerializer.EdgeCasesTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:date)
-          field(:time)
-          field(:datetime)
-          field(:naive_datetime)
+          field(:date, :date)
+          field(:time, :any)
+          field(:datetime, :datetime)
+          field(:naive_datetime, :any)
         end
       end
 
@@ -209,9 +209,9 @@ defmodule NbSerializer.EdgeCasesTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:float_val)
-          field(:decimal_val)
-          field(:integer_val)
+          field(:float_val, :any)
+          field(:decimal_val, :any)
+          field(:integer_val, :integer)
         end
       end
 
@@ -233,8 +233,8 @@ defmodule NbSerializer.EdgeCasesTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:status)
-          field(:type)
+          field(:status, :string)
+          field(:type, :string)
         end
       end
 
@@ -256,8 +256,8 @@ defmodule NbSerializer.EdgeCasesTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:data)
+          field(:id, :number)
+          field(:data, :any)
         end
       end
 
@@ -275,8 +275,8 @@ defmodule NbSerializer.EdgeCasesTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:coordinates, compute: :get_coordinates)
+          field(:id, :number)
+          field(:coordinates, :any, compute: :get_coordinates)
         end
 
         def get_coordinates(data, _opts) do
@@ -295,9 +295,9 @@ defmodule NbSerializer.EdgeCasesTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:tags)
-          field(:metadata)
+          field(:id, :number)
+          field(:tags, :any)
+          field(:metadata, :any)
         end
       end
 
@@ -316,8 +316,8 @@ defmodule NbSerializer.EdgeCasesTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:value)
+          field(:id, :number)
+          field(:value, :string)
         end
       end
 
@@ -338,8 +338,8 @@ defmodule NbSerializer.EdgeCasesTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:unique_tags, compute: :tags_to_list)
+          field(:id, :number)
+          field(:unique_tags, :string, list: true, compute: :tags_to_list)
         end
 
         def tags_to_list(data, _opts) do
@@ -361,7 +361,7 @@ defmodule NbSerializer.EdgeCasesTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:value)
+          field(:value, :string)
           has_many(:children, serializer: __MODULE__)
         end
       end
@@ -400,7 +400,7 @@ defmodule NbSerializer.EdgeCasesTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:name)
+          field(:name, :string)
         end
       end
 
@@ -408,8 +408,8 @@ defmodule NbSerializer.EdgeCasesTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:processed_inner, compute: :serialize_inner)
+          field(:id, :number)
+          field(:processed_inner, :any, compute: :serialize_inner)
         end
 
         def serialize_inner(data, opts) do
@@ -431,8 +431,8 @@ defmodule NbSerializer.EdgeCasesTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:range, compute: :convert_range)
+          field(:id, :number)
+          field(:range, :integer, list: true, compute: :convert_range)
         end
 
         def convert_range(data, _opts) do

@@ -34,10 +34,10 @@ defmodule NbSerializer.PolymorphicTest do
     use NbSerializer.Serializer
 
     schema do
-      field(:id)
-      field(:type, default: "user")
-      field(:name)
-      field(:email)
+      field(:id, :number)
+      field(:type, :string, default: "user")
+      field(:name, :string)
+      field(:email, :string)
     end
   end
 
@@ -45,11 +45,11 @@ defmodule NbSerializer.PolymorphicTest do
     use NbSerializer.Serializer
 
     schema do
-      field(:id)
-      field(:type, default: "company")
-      field(:name)
-      field(:industry)
-      field(:employee_count)
+      field(:id, :number)
+      field(:type, :string, default: "company")
+      field(:name, :string)
+      field(:industry, :string)
+      field(:employee_count, :integer)
     end
   end
 
@@ -57,12 +57,12 @@ defmodule NbSerializer.PolymorphicTest do
     use NbSerializer.Serializer
 
     schema do
-      field(:id)
-      field(:type, default: "admin")
-      field(:name)
-      field(:email)
-      field(:role)
-      field(:permissions)
+      field(:id, :number)
+      field(:type, :string, default: "admin")
+      field(:name, :string)
+      field(:email, :string)
+      field(:role, :string)
+      field(:permissions, :string, list: true)
     end
   end
 
@@ -71,9 +71,9 @@ defmodule NbSerializer.PolymorphicTest do
       use NbSerializer.Serializer
 
       schema do
-        field(:id)
-        field(:action)
-        field(:timestamp)
+        field(:id, :number)
+        field(:action, :string)
+        field(:timestamp, :datetime)
 
         has_one(:actor,
           polymorphic: [
@@ -90,8 +90,8 @@ defmodule NbSerializer.PolymorphicTest do
       use NbSerializer.Serializer
 
       schema do
-        field(:id)
-        field(:body)
+        field(:id, :number)
+        field(:body, :string)
 
         has_one(:author,
           polymorphic: [
@@ -150,8 +150,8 @@ defmodule NbSerializer.PolymorphicTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:title)
+          field(:id, :number)
+          field(:title, :string)
 
           has_one(:owner, polymorphic: :detect_owner_type)
         end
@@ -203,8 +203,8 @@ defmodule NbSerializer.PolymorphicTest do
       use NbSerializer.Serializer
 
       schema do
-        field(:id)
-        field(:name)
+        field(:id, :number)
+        field(:name, :string)
 
         has_many(:items,
           polymorphic: [
@@ -220,10 +220,10 @@ defmodule NbSerializer.PolymorphicTest do
       use NbSerializer.Serializer
 
       schema do
-        field(:id)
-        field(:type, default: "post")
-        field(:title)
-        field(:body)
+        field(:id, :number)
+        field(:type, :string, default: "post")
+        field(:title, :string)
+        field(:body, :string)
       end
     end
 
@@ -231,10 +231,10 @@ defmodule NbSerializer.PolymorphicTest do
       use NbSerializer.Serializer
 
       schema do
-        field(:id)
-        field(:type, default: "photo")
-        field(:url)
-        field(:caption)
+        field(:id, :number)
+        field(:type, :string, default: "photo")
+        field(:url, :string)
+        field(:caption, :string)
       end
     end
 
@@ -242,10 +242,10 @@ defmodule NbSerializer.PolymorphicTest do
       use NbSerializer.Serializer
 
       schema do
-        field(:id)
-        field(:type, default: "video")
-        field(:url)
-        field(:duration)
+        field(:id, :number)
+        field(:type, :string, default: "video")
+        field(:url, :string)
+        field(:duration, :integer)
       end
     end
 
@@ -279,7 +279,7 @@ defmodule NbSerializer.PolymorphicTest do
       use NbSerializer.Serializer
 
       schema do
-        field(:id)
+        field(:id, :number)
         has_one(:content, polymorphic: :detect_content_type)
       end
 

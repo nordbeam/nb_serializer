@@ -7,9 +7,9 @@ defmodule NbSerializer.ConditionalFieldsTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:name)
-          field(:secret, if: :show_secret?)
+          field(:id, :number)
+          field(:name, :string)
+          field(:secret, :string, if: :show_secret?)
         end
 
         def show_secret?(_data, opts) do
@@ -31,9 +31,9 @@ defmodule NbSerializer.ConditionalFieldsTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:public_info)
-          field(:private_info, if: :include_private?)
+          field(:id, :number)
+          field(:public_info, :string)
+          field(:private_info, :string, if: :include_private?)
         end
 
         def include_private?(_data, opts) do
@@ -57,9 +57,9 @@ defmodule NbSerializer.ConditionalFieldsTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:name)
-          field(:discounted_price, compute: :calculate_discount, if: :on_sale?)
+          field(:id, :number)
+          field(:name, :string)
+          field(:discounted_price, :any, compute: :calculate_discount, if: :on_sale?)
         end
 
         def calculate_discount(product, _opts) do
@@ -86,9 +86,9 @@ defmodule NbSerializer.ConditionalFieldsTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:name)
-          field(:sensitive_data, if: [:authorized?, :not_redacted?])
+          field(:id, :number)
+          field(:name, :string)
+          field(:sensitive_data, :string, if: [:authorized?, :not_redacted?])
         end
 
         def authorized?(_data, opts), do: opts[:user_role] == "admin"
@@ -120,8 +120,8 @@ defmodule NbSerializer.ConditionalFieldsTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:name)
+          field(:id, :number)
+          field(:name, :string)
         end
       end
 
@@ -129,8 +129,8 @@ defmodule NbSerializer.ConditionalFieldsTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:title)
+          field(:id, :number)
+          field(:title, :string)
           has_one(:author, serializer: AuthorSerializer, if: :include_author?)
         end
 
@@ -164,11 +164,11 @@ defmodule NbSerializer.ConditionalFieldsTest do
         use NbSerializer.Serializer
 
         schema do
-          field(:id)
-          field(:name)
-          field(:email, if: :show_email?)
-          field(:created_at, if: :show_admin_fields?)
-          field(:summary, if: :show_summary?)
+          field(:id, :number)
+          field(:name, :string)
+          field(:email, :string, if: :show_email?)
+          field(:created_at, :datetime, if: :show_admin_fields?)
+          field(:summary, :string, if: :show_summary?)
         end
 
         def show_email?(_data, opts) do
