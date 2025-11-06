@@ -87,9 +87,9 @@ field :email, :string, nullable: true
 # Optional fields (may be omitted from output)
 field :phone, :string, optional: true
 
-# List types
-field :tags, :string, list: true
-field :scores, :number, list: true
+# List types (unified syntax)
+field :tags, list: :string
+field :scores, list: :number
 ```
 
 ## Automatic CamelCase Conversion

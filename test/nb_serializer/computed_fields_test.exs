@@ -158,7 +158,7 @@ defmodule NbSerializer.ComputedFieldsTest do
         schema do
           field(:id, :number)
           field(:price, :any, compute: :calculate_price, transform: :round_price)
-          field(:tags, :string, list: true, transform: :sort_tags)
+          field(:tags, list: :string, transform: :sort_tags)
         end
 
         def calculate_price(item, _opts) do

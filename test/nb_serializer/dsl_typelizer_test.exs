@@ -88,18 +88,18 @@ defmodule NbSerializer.DSLTypelizerTest do
       use NbSerializer.Serializer
 
       schema do
-        field(:tags, :string, list: true)
-        field(:scores, :number, list: true)
-        field(:items, type: "Product", list: true)
+        field(:tags, list: :string)
+        field(:scores, list: :number)
+        field(:items, list: "Product")
       end
     end
 
     test "handles list type modifier" do
       fields = ListSerializer.__nb_serializer_fields__()
 
-      assert {:tags, [type: :string, list: true]} in fields
-      assert {:scores, [type: :number, list: true]} in fields
-      assert {:items, [type: "Product", list: true]} in fields
+      assert {:tags, [list: :string]} in fields
+      assert {:scores, [list: :number]} in fields
+      assert {:items, [list: "Product"]} in fields
     end
   end
 
@@ -152,7 +152,7 @@ defmodule NbSerializer.DSLTypelizerTest do
         field(:id, :number)
         field(:name, :string, compute: :format_name)
         field(:email, :string, nullable: true, if: :show_email?)
-        field(:tags, :string, list: true, optional: true)
+        field(:tags, list: :string, optional: true)
         field(:status, enum: ["active", "inactive"])
         field(:metadata, type: "Record<string, any>", nullable: true)
       end
@@ -175,8 +175,7 @@ defmodule NbSerializer.DSLTypelizerTest do
 
       tags_field = Enum.find(fields, fn {name, _} -> name == :tags end)
       {_, tags_opts} = tags_field
-      assert :string == Keyword.get(tags_opts, :type)
-      assert true == Keyword.get(tags_opts, :list)
+      assert :string == Keyword.get(tags_opts, :list)
       assert true == Keyword.get(tags_opts, :optional)
     end
   end

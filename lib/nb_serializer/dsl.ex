@@ -74,10 +74,10 @@ defmodule NbSerializer.DSL do
   ## Type Options
 
     * `:type` - TypeScript type (:string, :number, :integer, :boolean, :any, or custom string)
-    * `:enum` - List of allowed values for TypeScript enum type
+    * `:enum` - List of allowed values for TypeScript enum type (use as second param: `field :status, enum: [...]`)
+    * `:list` - List type with element type (use as second param: `field :tags, list: :string`)
     * `:nullable` - Whether the field can be null (default: false)
     * `:optional` - Whether the field is optional in TypeScript (default: false)
-    * `:list` - Whether this is a list type (can be combined with :type)
 
   ## Options
 
@@ -103,8 +103,16 @@ defmodule NbSerializer.DSL do
       field :name, :string
       field :metadata, :any
 
-      # Enum type
+      # Enum type (unified syntax)
       field :status, enum: ["active", "inactive", "pending"]
+
+      # List types (unified syntax)
+      field :tags, list: :string
+      field :scores, list: :number
+      field :items, list: "Product"  # Custom TypeScript type in list
+
+      # Nested list structures
+      field :statuses, list: [enum: ["active", "inactive"]]
 
       # Custom TypeScript type
       field :metadata, type: "Record<string, unknown>"
@@ -113,11 +121,8 @@ defmodule NbSerializer.DSL do
       field :email, :string, nullable: true
       field :phone, :string, optional: true
 
-      # List types
-      field :tags, type: :string, list: true
-      field :scores, :number, list: true
-
       # Combined with other field options
+      field :tags, list: :string, optional: true
       field :full_name, :string, compute: :build_full_name
       field :admin_notes, :string, if: :admin?
   """

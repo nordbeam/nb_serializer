@@ -339,7 +339,7 @@ defmodule NbSerializer.EdgeCasesTest do
 
         schema do
           field(:id, :number)
-          field(:unique_tags, :string, list: true, compute: :tags_to_list)
+          field(:unique_tags, list: :string, compute: :tags_to_list)
         end
 
         def tags_to_list(data, _opts) do
@@ -432,7 +432,7 @@ defmodule NbSerializer.EdgeCasesTest do
 
         schema do
           field(:id, :number)
-          field(:range, :integer, list: true, compute: :convert_range)
+          field(:range, list: :integer, compute: :convert_range)
         end
 
         def convert_range(data, _opts) do

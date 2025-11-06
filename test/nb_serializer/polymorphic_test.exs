@@ -62,7 +62,7 @@ defmodule NbSerializer.PolymorphicTest do
       field(:name, :string)
       field(:email, :string)
       field(:role, :string)
-      field(:permissions, :string, list: true)
+      field(:permissions, list: :string)
     end
   end
 
