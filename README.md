@@ -86,10 +86,80 @@ field :email, :string, nullable: true
 
 # Optional fields (may be omitted from output)
 field :phone, :string, optional: true
+```
 
-# List types (unified syntax)
-field :tags, list: :string
-field :scores, list: :number
+### Lists and Collections
+
+The unified syntax supports typed lists, including lists of primitives, enums, and serializers:
+
+```elixir
+# Lists of primitives
+field :tags, list: :string          # TypeScript: string[]
+field :scores, list: :number        # TypeScript: number[]
+field :flags, list: :boolean        # TypeScript: boolean[]
+
+# Lists of serializers (nested objects)
+field :users, list: UserSerializer  # TypeScript: User[]
+field :items, list: ItemSerializer  # TypeScript: Item[]
+
+# Lists can be optional
+field :notes, list: :string, optional: true  # TypeScript: notes?: string[]
+```
+
+### Enums
+
+Define fields with restricted values using enums:
+
+```elixir
+# Simple enum
+field :status, enum: ["active", "inactive", "pending"]
+# TypeScript: status: "active" | "inactive" | "pending"
+
+# Optional enum
+field :priority, enum: ["low", "medium", "high"], optional: true
+# TypeScript: priority?: "low" | "medium" | "high"
+
+# Nullable enum
+field :category, enum: ["news", "blog", "update"], nullable: true
+# TypeScript: category: "news" | "blog" | "update" | null
+
+# List of enums
+field :roles, list: [enum: ["admin", "user", "guest"]]
+# TypeScript: roles: ("admin" | "user" | "guest")[]
+```
+
+### Complete Example with All Field Types
+
+```elixir
+defmodule ProductSerializer do
+  use NbSerializer.Serializer
+
+  schema do
+    # Primitives
+    field :id, :number
+    field :name, :string
+    field :active, :boolean
+
+    # Lists of primitives
+    field :tags, list: :string
+    field :scores, list: :number
+
+    # Enums
+    field :status, enum: ["draft", "published", "archived"]
+    field :priority, enum: ["low", "high"], optional: true
+
+    # List of enums
+    field :categories, list: [enum: ["electronics", "books", "clothing"]]
+
+    # Nested serializers
+    field :users, list: UserSerializer
+    field :config, serializer: ConfigSerializer
+
+    # Optional and nullable
+    field :description, :string, optional: true
+    field :metadata, :any, nullable: true
+  end
+end
 ```
 
 ## Automatic CamelCase Conversion

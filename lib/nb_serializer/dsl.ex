@@ -74,12 +74,13 @@ defmodule NbSerializer.DSL do
   ## Type Options
 
     * `:type` - TypeScript type (:string, :number, :integer, :boolean, :any, or custom string)
-    * `:enum` - List of allowed values for TypeScript enum type (use as second param: `field :status, enum: [...]`)
-    * `:list` - List type with element type (use as second param: `field :tags, list: :string`)
+    * `:enum` - List of allowed values for TypeScript enum type
+    * `:list` - List type with element type (primitive, enum, or serializer module)
+    * `:serializer` - Nested serializer module for complex objects
     * `:nullable` - Whether the field can be null (default: false)
     * `:optional` - Whether the field is optional in TypeScript (default: false)
 
-  ## Options
+  ## Other Options
 
     * `:from` - The source field name if different from the output name
     * `:default` - Default value if the field is nil or missing
@@ -91,35 +92,40 @@ defmodule NbSerializer.DSL do
 
   ## Examples
 
-      # Simple types
-      field :id, type: :number
-      field :count, type: :integer
-      field :name, type: :string
-      field :active, type: :boolean
-
-      # Shorthand for common types (second parameter as atom)
+      # Simple types (shorthand)
       field :id, :number
-      field :count, :integer
       field :name, :string
+      field :active, :boolean
       field :metadata, :any
 
-      # Enum type (unified syntax)
+      # Enums - restricted string values
       field :status, enum: ["active", "inactive", "pending"]
+      # TypeScript: status: "active" | "inactive" | "pending"
 
-      # List types (unified syntax)
-      field :tags, list: :string
-      field :scores, list: :number
-      field :items, list: "Product"  # Custom TypeScript type in list
+      # Lists of primitives
+      field :tags, list: :string      # TypeScript: string[]
+      field :scores, list: :number    # TypeScript: number[]
+      field :flags, list: :boolean    # TypeScript: boolean[]
 
-      # Nested list structures
-      field :statuses, list: [enum: ["active", "inactive"]]
+      # Lists of serializers (nested objects)
+      field :users, list: UserSerializer    # TypeScript: User[]
+      field :items, list: ItemSerializer    # TypeScript: Item[]
 
-      # Custom TypeScript type
-      field :metadata, type: "Record<string, unknown>"
+      # List of enums
+      field :roles, list: [enum: ["admin", "user", "guest"]]
+      # TypeScript: ("admin" | "user" | "guest")[]
 
-      # Nullable and optional
-      field :email, :string, nullable: true
-      field :phone, :string, optional: true
+      # Nested serializers (single object)
+      field :config, serializer: ConfigSerializer
+      # TypeScript: config: Config
+
+      # Custom TypeScript type with ~TS sigil
+      field :metadata, type: ~TS"Record<string, unknown>"
+
+      # Nullable and optional modifiers
+      field :email, :string, nullable: true           # can be null
+      field :phone, :string, optional: true           # may be omitted
+      field :priority, enum: ["low", "high"], optional: true
 
       # Combined with other field options
       field :tags, list: :string, optional: true
