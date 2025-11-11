@@ -42,6 +42,7 @@ defmodule NbSerializer.MixProject do
       {:phoenix, "~> 1.7", optional: true},
       {:plug, "~> 1.14", optional: true},
       {:telemetry, "~> 1.2"},
+      {:nimble_options, "~> 1.1"},
       {:igniter, "~> 0.6", optional: true},
       {:ex_doc, "~> 0.31", only: :dev, runtime: false},
       {:excoveralls, "~> 0.18", only: :test},

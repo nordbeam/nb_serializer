@@ -32,6 +32,34 @@ defmodule NbSerializer.DSL do
         ]
 
   @doc """
+  Declares the expected struct type for compile-time field validation.
+
+  When specified, the DSL will validate at compile time that fields using
+  the `from:` option reference actual struct fields.
+
+  This is automatically set when using `use NbSerializer.Serializer, for: Module`.
+
+  ## Examples
+
+      defmodule UserSerializer do
+        use NbSerializer.Serializer
+
+        for_struct User
+
+        schema do
+          field :id, :number
+          field :full_name, :string, from: :name  # Validated at compile time
+        end
+      end
+
+  """
+  defmacro for_struct(module) do
+    quote do
+      @nb_serializer_struct_module unquote(module)
+    end
+  end
+
+  @doc """
   Sets a custom TypeScript interface name for this serializer.
 
   By default, the TypeScript interface name is derived from the module name
@@ -209,6 +237,11 @@ defmodule NbSerializer.DSL do
             end
 
           opts when is_list(opts) ->
+            # Validate struct field if `from:` option is present
+            if from = Keyword.get(opts, :from) do
+              NbSerializer.DSL.__validate_struct_field__(__MODULE__, unquote(name), from)
+            end
+
             # Check if type is a validated TypeScript type from ~TS sigil
             opts =
               case Keyword.get(opts, :type) do
@@ -238,6 +271,30 @@ defmodule NbSerializer.DSL do
         end
 
       @nb_serializer_fields {unquote(name), opts}
+    end
+  end
+
+  @doc false
+  def __validate_struct_field__(serializer_module, field_name, from_field) do
+    struct_module = Module.get_attribute(serializer_module, :nb_serializer_struct_module)
+
+    if struct_module && Code.ensure_loaded?(struct_module) do
+      if function_exported?(struct_module, :__struct__, 0) do
+        struct_fields = struct_module.__struct__() |> Map.keys()
+
+        unless from_field in struct_fields do
+          IO.warn(
+            """
+            Field `#{field_name}` uses `from: :#{from_field}` but :#{from_field} does not exist in #{inspect(struct_module)}.
+
+            Available fields: #{inspect(struct_fields)}
+
+            If this is intentional, you can ignore this warning.
+            """,
+            []
+          )
+        end
+      end
     end
   end
 

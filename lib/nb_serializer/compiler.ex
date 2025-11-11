@@ -245,22 +245,77 @@ defmodule NbSerializer.Compiler.Runtime do
   defp put_opt(opts, _, _), do: opts
 
   def process_fields(data, opts, fields, module) do
-    Enum.reduce(fields, %{}, fn {field_name, field_opts}, acc ->
-      if should_include?(data, opts, field_opts, module) do
-        case safe_get_field_value(data, field_name, field_opts, opts, module) do
-          {:ok, value} -> Map.put(acc, field_name, value)
-          {:skip, _} -> acc
-        end
+    fields
+    |> Enum.filter(&should_include?(data, opts, elem(&1, 1), module))
+    |> Enum.reduce(%{}, fn {field_name, field_opts}, acc ->
+      with {:ok, value} <- safe_get_field_value(data, field_name, field_opts, opts, module) do
+        Map.put(acc, field_name, value)
       else
-        acc
+        {:skip, _} -> acc
       end
     end)
   end
 
   def process_relationships(data, opts, relationships, module) do
-    Enum.reduce(relationships, %{}, fn rel, acc ->
-      process_relationship(rel, data, opts, acc, module)
+    # Use parallel processing for multiple relationships to improve performance
+    parallel_threshold = get_opt(opts, :parallel_threshold, 3)
+
+    if length(relationships) >= parallel_threshold do
+      process_relationships_parallel(data, opts, relationships, module)
+    else
+      process_relationships_sequential(data, opts, relationships, module)
+    end
+  end
+
+  defp process_relationships_sequential(data, opts, relationships, module) do
+    Enum.reduce(relationships, %{}, &process_relationship(&1, data, opts, &2, module))
+  end
+
+  defp process_relationships_parallel(data, opts, relationships, module) do
+    max_concurrency = System.schedulers_online()
+
+    relationships
+    |> Task.async_stream(
+      fn rel ->
+        {get_relationship_key(rel), process_relationship_value(rel, data, opts, module)}
+      end,
+      max_concurrency: max_concurrency,
+      timeout: get_opt(opts, :relationship_timeout, 30_000)
+    )
+    |> Enum.reduce(%{}, fn
+      {:ok, {key, {:ok, value}}}, acc ->
+        Map.put(acc, key, value)
+
+      {:ok, {_key, {:skip, _}}}, acc ->
+        acc
+
+      {:exit, reason}, acc ->
+        # Log error but continue with other relationships
+        require Logger
+        Logger.warning("Relationship processing failed: #{inspect(reason)}")
+        acc
     end)
+  end
+
+  defp get_relationship_key({:has_one, name, opts}), do: opts[:key] || name
+  defp get_relationship_key({:has_many, name, opts}), do: opts[:key] || name
+
+  defp process_relationship_value(rel, data, opts, module) do
+    case rel do
+      {:has_one, name, rel_opts} ->
+        if should_include?(data, opts, rel_opts, module) do
+          safe_get_relationship_value(:has_one, name, rel_opts, data, opts, module)
+        else
+          {:skip, nil}
+        end
+
+      {:has_many, name, rel_opts} ->
+        if should_include?(data, opts, rel_opts, module) do
+          safe_get_relationship_value(:has_many, name, rel_opts, data, opts, module)
+        else
+          {:skip, nil}
+        end
+    end
   end
 
   defp process_relationship({:has_one, name, rel_opts}, data, opts, acc, module) do

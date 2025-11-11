@@ -4,11 +4,14 @@ defmodule NbSerializer.Application do
   @impl true
   def start(_type, _args) do
     children =
-      if typelizer_enabled?() do
-        [{NbSerializer.Typelizer.Registry, []}]
-      else
-        []
-      end
+      [
+        {NbSerializer.Registry, []}
+      ] ++
+        if typelizer_enabled?() do
+          [{NbSerializer.Typelizer.Registry, []}]
+        else
+          []
+        end
 
     opts = [strategy: :one_for_one, name: NbSerializer.Supervisor]
     Supervisor.start_link(children, opts)

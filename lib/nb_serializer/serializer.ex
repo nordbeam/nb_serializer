@@ -4,25 +4,61 @@ defmodule NbSerializer.Serializer do
 
   This module is used via `use NbSerializer.Serializer` and provides
   macros for defining fields, relationships, and computed attributes.
+
+  ## Options
+
+    * `:for` - Struct module to automatically register this serializer for.
+      Enables `NbSerializer.serialize_inferred/2` to work automatically.
+
+  ## Examples
+
+      # Without auto-registration
+      defmodule UserSerializer do
+        use NbSerializer.Serializer
+
+        schema do
+          field :id, :number
+          field :name, :string
+        end
+      end
+
+      # With auto-registration
+      defmodule UserSerializer do
+        use NbSerializer.Serializer, for: User
+
+        schema do
+          field :id, :number
+          field :name, :string
+        end
+      end
+
   """
 
-  # Behavior callbacks that serializers must implement
-  @callback __nb_serializer_serialize__(data :: any(), opts :: keyword()) :: map()
-  @callback __nb_serializer_fields__() :: [{atom(), keyword()}]
-  @callback __nb_serializer_relationships__() :: [{atom(), keyword()}]
+  defmacro __using__(opts) do
+    struct_module = Keyword.get(opts, :for)
 
-  @optional_callbacks __nb_serializer_fields__: 0, __nb_serializer_relationships__: 0
-
-  defmacro __using__(_opts) do
     quote do
+      @behaviour NbSerializer.Behaviour
+
       import NbSerializer.DSL
 
       Module.register_attribute(__MODULE__, :nb_serializer_fields, accumulate: true)
       Module.register_attribute(__MODULE__, :nb_serializer_relationships, accumulate: true)
       Module.register_attribute(__MODULE__, :nb_serializer_config, [])
+      Module.register_attribute(__MODULE__, :nb_serializer_struct_module, [])
       Module.register_attribute(__MODULE__, :typescript_name, [])
 
+      # Store the struct module for validation and registration
+      if unquote(struct_module) do
+        @nb_serializer_struct_module unquote(struct_module)
+      end
+
       @before_compile NbSerializer.Compiler
+
+      # Register with the serializer registry after compilation
+      if unquote(struct_module) do
+        @after_compile {NbSerializer.Serializer, :__register__}
+      end
 
       # Optional: Register after-compile hook for real-time TypeScript type generation
       # This only runs if nb_ts is available (it's an optional dependency)
@@ -49,5 +85,16 @@ defmodule NbSerializer.Serializer do
         __nb_serializer_serialize__(data, opts)
       end
     end
+  end
+
+  @doc false
+  def __register__(env, _bytecode) do
+    struct_module = Module.get_attribute(env.module, :nb_serializer_struct_module)
+
+    if struct_module && Process.whereis(NbSerializer.Registry) do
+      NbSerializer.Registry.register(struct_module, env.module)
+    end
+
+    :ok
   end
 end

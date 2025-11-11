@@ -220,6 +220,131 @@ defmodule NbSerializer do
   end
 
   @doc """
+  Serializes data using an inferred serializer from the registry.
+
+  Looks up the appropriate serializer based on the struct type and uses it
+  for serialization. The serializer must be registered using the `:for` option
+  or manually via `NbSerializer.Registry.register/2`.
+
+  Returns `{:ok, serialized}` or `{:error, reason}`.
+
+  ## Examples
+
+      defmodule UserSerializer do
+        use NbSerializer.Serializer, for: User
+
+        schema do
+          field :id, :number
+          field :name, :string
+        end
+      end
+
+      user = %User{id: 1, name: "Alice"}
+      NbSerializer.serialize_inferred(user)
+      # => {:ok, %{id: 1, name: "Alice"}}
+
+  """
+  @spec serialize_inferred(struct(), opts()) :: {:ok, serialized()} | {:error, term()}
+  def serialize_inferred(data, opts \\ [])
+
+  def serialize_inferred(data, opts) when is_struct(data) do
+    case NbSerializer.Registry.lookup(data) do
+      {:ok, serializer} ->
+        serialize(serializer, data, opts)
+
+      {:error, :not_found} ->
+        {:error,
+         %NbSerializer.SerializationError{
+           message:
+             "No serializer registered for #{inspect(data.__struct__)}. " <>
+               "Use `use NbSerializer.Serializer, for: #{inspect(data.__struct__)}` " <>
+               "or register manually with NbSerializer.Registry.register/2"
+         }}
+    end
+  end
+
+  def serialize_inferred(data, _opts) when not is_struct(data) do
+    {:error,
+     %NbSerializer.SerializationError{
+       message: "serialize_inferred/2 requires a struct, got: #{inspect(data)}"
+     }}
+  end
+
+  @doc """
+  Serializes data using an inferred serializer from the registry (bang version).
+
+  Like `serialize_inferred/2` but raises on error.
+
+  ## Examples
+
+      user = %User{id: 1, name: "Alice"}
+      NbSerializer.serialize_inferred!(user)
+      # => %{id: 1, name: "Alice"}
+
+  """
+  @spec serialize_inferred!(struct(), opts()) :: serialized() | no_return()
+  def serialize_inferred!(data, opts \\ []) do
+    case serialize_inferred(data, opts) do
+      {:ok, result} -> result
+      {:error, %NbSerializer.SerializationError{} = error} -> raise error
+      {:error, reason} -> raise NbSerializer.SerializationError, message: inspect(reason)
+    end
+  end
+
+  @doc """
+  Creates a stream that serializes items lazily.
+
+  This is useful for serializing large collections without loading everything
+  into memory at once. The stream can be piped to other Stream functions or
+  enumerated as needed.
+
+  ## Options
+
+  Same options as `serialize/3`, plus:
+
+    * `:chunk_size` - Number of items to serialize per chunk (default: 100)
+
+  ## Examples
+
+      # Serialize a stream of users
+      users_query
+      |> Repo.stream()
+      |> NbSerializer.serialize_stream(UserSerializer)
+      |> Stream.map(&encode_to_json/1)
+      |> Stream.into(File.stream!("users.jsonl"))
+      |> Stream.run()
+
+      # With options
+      posts
+      |> Stream.map(&load_associations/1)
+      |> NbSerializer.serialize_stream(PostSerializer, view: :detailed)
+      |> Enum.to_list()
+
+  """
+  @spec serialize_stream(serializer(), Enumerable.t(), opts()) :: Enumerable.t()
+  def serialize_stream(serializer, stream, opts \\ []) do
+    Stream.map(stream, &serialize!(serializer, &1, opts))
+  end
+
+  @doc """
+  Creates a stream that serializes items lazily using inferred serializers.
+
+  Like `serialize_stream/3` but automatically infers the serializer from
+  each struct's type.
+
+  ## Examples
+
+      users
+      |> NbSerializer.serialize_stream_inferred()
+      |> Enum.to_list()
+
+  """
+  @spec serialize_stream_inferred(Enumerable.t(), opts()) :: Enumerable.t()
+  def serialize_stream_inferred(stream, opts \\ []) do
+    Stream.map(stream, &serialize_inferred!(&1, opts))
+  end
+
+  @doc """
   Returns the configured JSON encoder module.
   """
   @spec encoder() :: module()
@@ -327,14 +452,12 @@ defmodule NbSerializer do
 
   defp camelize_keys(data) when is_map(data) do
     data
-    |> Enum.map(fn {key, value} ->
-      {camelize_key(key), camelize_keys(value)}
-    end)
+    |> Enum.map(&{camelize_key(elem(&1, 0)), camelize_keys(elem(&1, 1))})
     |> Map.new()
   end
 
   defp camelize_keys(data) when is_list(data) do
-    Enum.map(data, &camelize_keys/1)
+    Enum.map(data, &camelize_keys(&1))
   end
 
   defp camelize_keys(data), do: data
@@ -356,11 +479,11 @@ defmodule NbSerializer do
     string
     |> String.split("_")
     |> Enum.with_index()
-    |> Enum.map_join(fn
-      # First word stays lowercase
-      {word, 0} -> word
-      # Rest are capitalized
-      {word, _} -> String.capitalize(word)
-    end)
+    |> Enum.map_join(&camelize_word/1)
   end
+
+  # First word stays lowercase
+  defp camelize_word({word, 0}), do: word
+  # Rest are capitalized
+  defp camelize_word({word, _}), do: String.capitalize(word)
 end

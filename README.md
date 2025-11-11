@@ -13,6 +13,11 @@ A fast and declarative JSON serialization library for Elixir, inspired by Alba f
 - 📊 **Metadata & Pagination** - Built-in support for API metadata
 - 🏗️ **Telemetry ready** - Built-in telemetry events for performance monitoring
 - 🛡️ **Error handling** - Comprehensive error management with custom exceptions
+- 🔍 **Auto-discovery** - Automatic serializer registration and inference
+- 🌊 **Stream support** - Memory-efficient streaming for large datasets
+- 🔌 **Protocol-based extensibility** - Extend formatting and transformation for custom types
+- ⚡ **Parallel processing** - Automatic parallelization of relationship loading
+- ✅ **Compile-time validation** - Struct field validation at compile time
 
 ## Installation
 
@@ -51,6 +56,28 @@ user = %{id: 1, name: "John Doe", email: "john@example.com"}
 # Direct JSON encoding
 json = NbSerializer.to_json!(UserSerializer, user)
 # => "{\"id\":1,\"name\":\"John Doe\",\"email\":\"john@example.com\"}"
+```
+
+### Auto-Registration (New in 0.2.0)
+
+Use the `:for` option to automatically register a serializer for a struct type:
+
+```elixir
+defmodule UserSerializer do
+  use NbSerializer.Serializer, for: User  # Auto-register for User struct
+
+  schema do
+    field :id, :number
+    field :name, :string
+    field :email, :string
+  end
+end
+
+# Now you can use inferred serialization
+user = %User{id: 1, name: "Alice", email: "alice@example.com"}
+NbSerializer.serialize_inferred!(user)
+# => %{id: 1, name: "Alice", email: "alice@example.com"}
+# Automatically uses UserSerializer!
 ```
 
 ## Field Types
@@ -202,6 +229,177 @@ NbSerializer.serialize(UserSerializer, user, camelize: false)
 ```
 
 ## Advanced Features
+
+### Serializer Auto-Discovery
+
+The serializer registry allows automatic discovery of serializers based on struct types.
+
+```elixir
+# Register a serializer for a struct type
+defmodule UserSerializer do
+  use NbSerializer.Serializer, for: User  # Auto-registers at compile time
+
+  schema do
+    field :id, :number
+    field :name, :string
+  end
+end
+
+# Inferred serialization - no need to specify serializer
+user = %User{id: 1, name: "Alice"}
+{:ok, result} = NbSerializer.serialize_inferred(user)
+
+# Works with lists too
+users = [%User{id: 1}, %User{id: 2}]
+NbSerializer.serialize_inferred!(users)
+
+# Manual registration
+NbSerializer.Registry.register(Post, PostSerializer)
+```
+
+### Stream Serialization
+
+Efficiently serialize large datasets without loading everything into memory:
+
+```elixir
+# Stream from database
+users_query
+|> Repo.stream()
+|> NbSerializer.serialize_stream(UserSerializer)
+|> Stream.map(&NbSerializer.encode!/1)
+|> Stream.into(File.stream!("users.jsonl"))
+|> Stream.run()
+
+# With inferred serializers
+posts
+|> Stream.map(&load_associations/1)
+|> NbSerializer.serialize_stream_inferred(view: :detailed)
+|> Enum.to_list()
+
+# Process in chunks
+large_dataset
+|> NbSerializer.serialize_stream(ItemSerializer, chunk_size: 100)
+|> Stream.each(&process_chunk/1)
+|> Stream.run()
+```
+
+### Protocol-Based Extensibility
+
+Extend formatting and transformation for your custom types using protocols:
+
+```elixir
+# Define a custom type
+defmodule Money do
+  defstruct [:amount, :currency]
+end
+
+# Implement the Formatter protocol
+defimpl NbSerializer.Formatter, for: Money do
+  def format(%Money{amount: amount, currency: currency}, opts) do
+    precision = Keyword.get(opts, :precision, 2)
+    symbol = Keyword.get(opts, :symbol, currency)
+    formatted = :erlang.float_to_binary(amount / 1.0, decimals: precision)
+    "#{symbol}#{formatted}"
+  end
+end
+
+# Now Money values are automatically formatted
+defmodule ProductSerializer do
+  use NbSerializer.Serializer
+
+  schema do
+    field :id, :number
+    field :name, :string
+    field :price, :any  # Will use Money's formatter when use_protocol: true
+  end
+end
+
+product = %{id: 1, name: "Widget", price: %Money{amount: 19.99, currency: "USD"}}
+NbSerializer.serialize!(ProductSerializer, product, use_protocol: true)
+# => %{id: 1, name: "Widget", price: "$19.99"}
+```
+
+**Available Protocols:**
+- `NbSerializer.Formatter` - Format values for output (DateTime, Date, Decimal, custom types)
+- `NbSerializer.Transformer` - Transform values before formatting (String, List, custom types)
+
+**Note:** Protocols are opt-in via `use_protocol: true` option to maintain backwards compatibility.
+
+### Compile-Time Struct Validation
+
+Validate struct fields at compile time to catch errors early:
+
+```elixir
+defmodule UserSerializer do
+  use NbSerializer.Serializer, for: User  # Automatically enables validation
+
+  schema do
+    field :id, :number
+    field :full_name, :string, from: :name  # Validates :name exists in User struct
+    field :contact, :string, from: :email   # Validates :email exists in User struct
+  end
+end
+
+# If User struct doesn't have a :name field, you'll get a compile warning:
+# warning: Field `full_name` uses `from: :name` but :name does not exist in User
+```
+
+### Better Circular Reference Handling
+
+Use the improved `within` syntax for cleaner circular reference management:
+
+```elixir
+import NbSerializer.Within
+
+# Path-based syntax
+NbSerializer.serialize(post, within: build([
+  ~w(author books)a,
+  ~w(author posts)a,
+  ~w(comments user posts)a
+]))
+
+# Generate from serializer relationships
+within_opts = Within.from_serializer(PostSerializer)
+NbSerializer.serialize(post, within: within_opts)
+
+# Merge multiple within options
+within1 = [author: [books: []]]
+within2 = [author: [posts: []], comments: []]
+merged = Within.merge(within1, within2)
+# => [author: [books: [], posts: []], comments: []]
+```
+
+### Parallel Relationship Loading
+
+Relationships are automatically processed in parallel when there are 3 or more:
+
+```elixir
+defmodule PostSerializer do
+  use NbSerializer.Serializer
+
+  schema do
+    field :id, :number
+    field :title, :string
+
+    # These 4 relationships will be loaded in parallel
+    has_one :author, AuthorSerializer
+    has_many :comments, CommentSerializer
+    has_many :tags, TagSerializer
+    has_many :categories, CategorySerializer
+  end
+end
+
+# Parallel loading happens automatically
+NbSerializer.serialize!(PostSerializer, post)
+
+# Configure the threshold
+NbSerializer.serialize!(PostSerializer, post,
+  parallel_threshold: 2,  # Start parallel at 2 relationships
+  relationship_timeout: 30_000  # Timeout per relationship
+)
+
+# Use System.schedulers_online() for max concurrency
+```
 
 ### Computed Fields
 
@@ -476,8 +674,47 @@ The DSL compiles to efficient runtime code:
 # config/config.exs
 config :nb_serializer,
   encoder: Jason,  # JSON encoder (defaults to Jason if available)
+  camelize_props: true,  # Auto-convert to camelCase (default: true)
   default_view: :public,
   max_depth: 10
+
+# config/dev.exs
+config :nb_serializer,
+  # Enable compile-time struct field validation warnings
+  validate_struct_fields: true  # default: true in dev/test
+```
+
+### Serialization Options
+
+All serialization functions accept these options:
+
+```elixir
+NbSerializer.serialize(UserSerializer, user,
+  # Circular reference control
+  within: [author: [books: []]],
+  max_depth: 5,
+
+  # Protocol-based formatting (opt-in)
+  use_protocol: true,
+
+  # Parallel relationship loading
+  parallel_threshold: 3,
+  relationship_timeout: 30_000,
+
+  # View and scope
+  view: :detailed,
+  current_scope: current_user,
+
+  # Output formatting
+  camelize: true,
+  root: "users",
+  meta: %{version: "1.0"},
+
+  # Pagination
+  page: 1,
+  per_page: 20,
+  total: 100
+)
 ```
 
 ## Testing
@@ -519,6 +756,9 @@ lib/
 2. **Compile-Time Optimization** - DSL compiles to efficient runtime code via macros
 3. **Explicit Field Definition** - Serializers must explicitly define included fields
 4. **Ecto-First Design** - Built-in handling for Ecto associations and schemas
+5. **Protocol-Based Extensibility** - Use Elixir protocols for custom type formatting
+6. **Idiomatic Elixir** - Follows Elixir best practices (behaviours, protocols, function capturing, `with` statements)
+7. **Performance-Conscious** - Automatic parallelization, streaming support, and efficient compilation
 
 ## Related Libraries
 
