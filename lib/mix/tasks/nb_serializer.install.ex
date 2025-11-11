@@ -45,8 +45,9 @@ if Code.ensure_loaded?(Igniter.Mix.Task) do
     @impl Igniter.Mix.Task
     def info(_argv, _source) do
       %Igniter.Mix.Task.Info{
-        group: :nb_serializer,
+        group: :nb,
         example: "mix nb_serializer.install --with-ecto --with-phoenix",
+        composes: ["deps.get"],
         schema: [
           with_ecto: :boolean,
           with_phoenix: :boolean,
@@ -76,8 +77,8 @@ if Code.ensure_loaded?(Igniter.Mix.Task) do
       skip_prompts = igniter.args.options[:yes] || false
 
       igniter
+      |> Igniter.Project.Formatter.import_dep(:nb_serializer)
       |> print_welcome_message(skip_prompts)
-      |> add_nb_serializer_dependency()
       |> maybe_add_optional_dependencies(with_ecto, with_phoenix, with_typescript)
       |> add_configuration(camelize_props, with_ecto, with_phoenix)
       |> create_example_serializer(with_ecto)
@@ -106,10 +107,6 @@ if Code.ensure_loaded?(Igniter.Mix.Task) do
       end
 
       igniter
-    end
-
-    defp add_nb_serializer_dependency(igniter) do
-      Igniter.Project.Deps.add_dep(igniter, {:nb_serializer, "~> 0.2"})
     end
 
     defp maybe_add_optional_dependencies(igniter, with_ecto, with_phoenix, with_typescript) do
