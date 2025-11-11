@@ -18,7 +18,10 @@ defmodule NbSerializer.Application do
   end
 
   defp typelizer_enabled? do
-    Mix.env() in [:dev, :test] &&
+    # Mix is not available in releases, so we check if it's loaded
+    # Typelizer should only run in dev/test environments
+    Code.ensure_loaded?(Mix) &&
+      Mix.env() in [:dev, :test] &&
       Application.get_env(:nb_serializer, :typelizer_enabled, false)
   end
 end
