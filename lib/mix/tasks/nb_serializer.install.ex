@@ -131,7 +131,9 @@ if Code.ensure_loaded?(Igniter.Mix.Task) do
     defp maybe_add_phoenix(igniter, _), do: igniter
 
     defp maybe_add_typescript(igniter, true) do
-      Igniter.Project.Deps.add_dep(igniter, {:nb_ts, "~> 0.1"})
+      # Compose the nb_ts installer to properly set up TypeScript type generation
+      # This will configure nb_ts, create output directory, update tsconfig, etc.
+      Igniter.compose_task(igniter, "nb_ts.install", ["--output-dir", "assets/js/types"])
     end
 
     defp maybe_add_typescript(igniter, _), do: igniter
