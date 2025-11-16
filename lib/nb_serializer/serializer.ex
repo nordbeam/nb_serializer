@@ -47,6 +47,7 @@ defmodule NbSerializer.Serializer do
       Module.register_attribute(__MODULE__, :nb_serializer_config, [])
       Module.register_attribute(__MODULE__, :nb_serializer_struct_module, [])
       Module.register_attribute(__MODULE__, :typescript_name, [])
+      Module.register_attribute(__MODULE__, :typescript_namespace, [])
 
       # Store the struct module for validation and registration
       if unquote(struct_module) do

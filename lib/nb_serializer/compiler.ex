@@ -10,6 +10,7 @@ defmodule NbSerializer.Compiler do
       Module.get_attribute(env.module, :nb_serializer_relationships) |> Enum.reverse()
 
     typescript_name = Module.get_attribute(env.module, :typescript_name)
+    typescript_namespace = Module.get_attribute(env.module, :typescript_namespace)
 
     # Validate compute functions at compile time
     validate_compute_functions(env.module, fields, relationships)
@@ -55,12 +56,15 @@ defmodule NbSerializer.Compiler do
         unquote(typescript_name)
       end
 
+      # Expose TypeScript namespace if provided
+      def __nb_serializer_typescript_namespace__ do
+        unquote(typescript_namespace)
+      end
+
       # Generate TypeScript interface (moved to nb_ts library)
       def __nb_serializer_typescript_interface__ do
         if Code.ensure_loaded?(NbTs.Interface) do
           NbTs.Interface.build(__MODULE__)
-        else
-          nil
         end
       end
 
@@ -172,7 +176,7 @@ defmodule NbSerializer.Compiler do
         {name, type_info}
       end)
 
-    Enum.into(field_types ++ relationship_types, %{})
+    Map.new(field_types ++ relationship_types)
   end
 
   defp check_for_circular_references(module, relationships) do
@@ -219,8 +223,8 @@ end
 defmodule NbSerializer.Compiler.Runtime do
   @moduledoc false
 
-  alias NbSerializer.Utils
   alias NbSerializer.Pipeline
+  alias NbSerializer.Utils
 
   # Helper to get option from both maps and keyword lists
   defp get_opt(opts, key, default) when is_map(opts) do
@@ -248,9 +252,8 @@ defmodule NbSerializer.Compiler.Runtime do
     fields
     |> Enum.filter(&should_include?(data, opts, elem(&1, 1), module))
     |> Enum.reduce(%{}, fn {field_name, field_opts}, acc ->
-      with {:ok, value} <- safe_get_field_value(data, field_name, field_opts, opts, module) do
-        Map.put(acc, field_name, value)
-      else
+      case safe_get_field_value(data, field_name, field_opts, opts, module) do
+        {:ok, value} -> Map.put(acc, field_name, value)
         {:skip, _} -> acc
       end
     end)
@@ -292,6 +295,7 @@ defmodule NbSerializer.Compiler.Runtime do
       {:exit, reason}, acc ->
         # Log error but continue with other relationships
         require Logger
+
         Logger.warning("Relationship processing failed: #{inspect(reason)}")
         acc
     end)
@@ -460,14 +464,7 @@ defmodule NbSerializer.Compiler.Runtime do
     end
   end
 
-  defp handle_missing_association(
-         data,
-         serializer,
-         opts,
-         association_type,
-         on_missing,
-         field_name
-       ) do
+  defp handle_missing_association(data, serializer, opts, association_type, on_missing, field_name) do
     case data do
       nil when on_missing == :null ->
         nil
@@ -564,42 +561,20 @@ defmodule NbSerializer.Compiler.Runtime do
   defp serialize_association([], _serializer, _opts, :many, _field_name), do: []
 
   # Handle Ecto.Association.NotLoaded
-  defp serialize_association(
-         %Ecto.Association.NotLoaded{},
-         _serializer,
-         _opts,
-         :one,
-         _field_name
-       ),
-       do: nil
+  defp serialize_association(%Ecto.Association.NotLoaded{}, _serializer, _opts, :one, _field_name), do: nil
 
-  defp serialize_association(
-         %Ecto.Association.NotLoaded{},
-         _serializer,
-         _opts,
-         :many,
-         _field_name
-       ),
-       do: []
+  defp serialize_association(%Ecto.Association.NotLoaded{}, _serializer, _opts, :many, _field_name), do: []
 
   defp serialize_association(data, nil, _opts, _cardinality, _field_name), do: data
 
-  defp serialize_association(data, serializer, opts, cardinality, field_name)
-       when not is_nil(serializer) do
+  defp serialize_association(data, serializer, opts, cardinality, field_name) when not is_nil(serializer) do
     # Check within option to control circular references
     within = get_opt(opts, :within, nil)
 
     # Check if this association should be serialized based on within option
     {should_serialize, nested_within} = check_within_permission(within, field_name)
 
-    if not should_serialize do
-      # This association is not in the within path, don't serialize it
-      case cardinality do
-        :one -> nil
-        :many -> []
-        _ -> nil
-      end
-    else
+    if should_serialize do
       # Check for max_depth to prevent infinite recursion
       current_depth = get_opt(opts, :_depth, 0)
       max_depth = get_opt(opts, :max_depth, nil) || 10
@@ -620,10 +595,10 @@ defmodule NbSerializer.Compiler.Runtime do
 
         # Update options with nested within configuration
         nested_opts =
-          if nested_within != nil do
-            put_opt(nested_opts, :within, nested_within)
-          else
+          if nested_within == nil do
             nested_opts
+          else
+            put_opt(nested_opts, :within, nested_within)
           end
 
         case Utils.handle_nil_or_empty(data, cardinality) do
@@ -639,7 +614,15 @@ defmodule NbSerializer.Compiler.Runtime do
               :many when is_list(data) -> Enum.map(data, &serializer.serialize(&1, nested_opts))
               _ -> data
             end
+
+            # This association is not in the within path, don't serialize it
         end
+      end
+    else
+      case cardinality do
+        :one -> nil
+        :many -> []
+        _ -> nil
       end
     end
   end
@@ -647,20 +630,16 @@ defmodule NbSerializer.Compiler.Runtime do
   defp serialize_polymorphic(nil, _polymorphic, _opts, :one, _module), do: nil
   defp serialize_polymorphic(nil, _polymorphic, _opts, :many, _module), do: []
 
-  defp serialize_polymorphic(%Ecto.Association.NotLoaded{}, _polymorphic, _opts, :one, _module),
-    do: nil
+  defp serialize_polymorphic(%Ecto.Association.NotLoaded{}, _polymorphic, _opts, :one, _module), do: nil
 
-  defp serialize_polymorphic(%Ecto.Association.NotLoaded{}, _polymorphic, _opts, :many, _module),
-    do: []
+  defp serialize_polymorphic(%Ecto.Association.NotLoaded{}, _polymorphic, _opts, :many, _module), do: []
 
   defp serialize_polymorphic(data, polymorphic, opts, :one, module) do
     # Check max_depth for polymorphic associations too
     current_depth = get_opt(opts, :_depth, 0)
     max_depth = get_opt(opts, :max_depth, nil) || 10
 
-    if max_depth && current_depth >= max_depth do
-      nil
-    else
+    if !(max_depth && current_depth >= max_depth) do
       serializer = detect_polymorphic_serializer(data, polymorphic, opts, module)
 
       if serializer do
@@ -697,13 +676,10 @@ defmodule NbSerializer.Compiler.Runtime do
         {^struct_type, serializer} -> serializer
         _ -> nil
       end)
-    else
-      nil
     end
   end
 
-  defp detect_polymorphic_serializer(data, detector, _opts, _module)
-       when is_function(detector, 1) do
+  defp detect_polymorphic_serializer(data, detector, _opts, _module) when is_function(detector, 1) do
     # Use custom detection function
     detector.(data)
   end

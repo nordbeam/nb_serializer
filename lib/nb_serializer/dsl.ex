@@ -88,6 +88,54 @@ defmodule NbSerializer.DSL do
   end
 
   @doc """
+  Sets a namespace prefix for TypeScript file generation.
+
+  The namespace is used as a prefix for the generated TypeScript filename,
+  helping organize and prevent naming collisions between serializers.
+
+  ## Examples
+
+      defmodule MyApp.Serializers.API.UserSerializer do
+        use NbSerializer.Serializer
+
+        namespace "API"
+
+        schema do
+          field :id, :string
+          field :name, :string
+        end
+      end
+
+      # Generates:
+      # - Filename: APIUserSerializer.ts
+      # - Interface: export interface APIUser { ... }
+
+  ## Combined with typescript_name
+
+  You can use both `namespace` and `typescript_name` together:
+
+      defmodule MyApp.Serializers.API.V1.ShopSerializer do
+        use NbSerializer.Serializer
+
+        namespace "API"
+        typescript_name "Shop"  # Override default interface name
+
+        schema do
+          field :domain, :string
+        end
+      end
+
+      # Generates:
+      # - Filename: APIShopSerializer.ts
+      # - Interface: export interface Shop { ... }
+  """
+  defmacro namespace(prefix) when is_binary(prefix) do
+    quote do
+      @typescript_namespace unquote(prefix)
+    end
+  end
+
+  @doc """
   Defines the schema block for field definitions.
   """
   defmacro schema(do: block) do
@@ -282,7 +330,7 @@ defmodule NbSerializer.DSL do
       if function_exported?(struct_module, :__struct__, 0) do
         struct_fields = struct_module.__struct__() |> Map.keys()
 
-        unless from_field in struct_fields do
+        if from_field not in struct_fields do
           IO.warn(
             """
             Field `#{field_name}` uses `from: :#{from_field}` but :#{from_field} does not exist in #{inspect(struct_module)}.
@@ -304,7 +352,7 @@ defmodule NbSerializer.DSL do
   defmacro field(name, :typescript, opts) when is_atom(name) and is_list(opts) do
     quote bind_quoted: [name: name, opts: opts] do
       # Validate that type option exists
-      unless Keyword.has_key?(opts, :type) do
+      if !Keyword.has_key?(opts, :type) do
         raise CompileError,
           file: __ENV__.file,
           line: __ENV__.line,
@@ -423,8 +471,7 @@ defmodule NbSerializer.DSL do
   # Shorthand: has_one :config, WidgetConfigSerializer
   defmacro has_one(name, serializer_module) do
     quote do
-      @nb_serializer_relationships {:has_one, unquote(name),
-                                    [serializer: unquote(serializer_module)]}
+      @nb_serializer_relationships {:has_one, unquote(name), [serializer: unquote(serializer_module)]}
     end
   end
 
@@ -472,8 +519,7 @@ defmodule NbSerializer.DSL do
   # Shorthand: has_many :comments, CommentSerializer
   defmacro has_many(name, serializer_module) do
     quote do
-      @nb_serializer_relationships {:has_many, unquote(name),
-                                    [serializer: unquote(serializer_module)]}
+      @nb_serializer_relationships {:has_many, unquote(name), [serializer: unquote(serializer_module)]}
     end
   end
 
@@ -519,8 +565,7 @@ defmodule NbSerializer.DSL do
   # Shorthand: belongs_to :user, UserSerializer
   defmacro belongs_to(name, serializer_module) do
     quote do
-      @nb_serializer_relationships {:has_one, unquote(name),
-                                    [serializer: unquote(serializer_module)]}
+      @nb_serializer_relationships {:has_one, unquote(name), [serializer: unquote(serializer_module)]}
     end
   end
 end
