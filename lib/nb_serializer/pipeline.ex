@@ -75,7 +75,7 @@ defmodule NbSerializer.Pipeline do
   # Protocol-based formatting
   # Disabled by default to maintain backwards compatibility
   # Only apply if there's no custom formatter specified
-  defp maybe_protocol_format(value, opts, module) do
+  defp maybe_protocol_format(value, opts, _module) do
     has_custom_format = opts[:format] != nil
 
     if not has_custom_format &&

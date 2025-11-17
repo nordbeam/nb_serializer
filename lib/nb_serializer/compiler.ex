@@ -64,7 +64,7 @@ defmodule NbSerializer.Compiler do
       # Generate TypeScript interface (moved to nb_ts library)
       def __nb_serializer_typescript_interface__ do
         if Code.ensure_loaded?(NbTs.Interface) do
-          NbTs.Interface.build(__MODULE__)
+          apply(NbTs.Interface, :build, [__MODULE__])
         end
       end
 
@@ -72,7 +72,7 @@ defmodule NbSerializer.Compiler do
       def __nb_serializer_ensure_registered__ do
         if Code.ensure_loaded?(NbTs.Registry) and
              Process.whereis(NbTs.Registry) do
-          NbTs.Registry.register(__MODULE__)
+          apply(NbTs.Registry, :register, [__MODULE__])
         end
 
         :ok
@@ -136,7 +136,7 @@ defmodule NbSerializer.Compiler do
     field_types =
       Enum.map(fields, fn {name, opts} ->
         if Code.ensure_loaded?(NbTs.TypeMapper) do
-          type_info = NbTs.TypeMapper.normalize_type_opts(opts)
+          type_info = apply(NbTs.TypeMapper, :normalize_type_opts, [opts])
 
           # Preserve typescript_validated flag from DSL
           type_info =
@@ -464,7 +464,14 @@ defmodule NbSerializer.Compiler.Runtime do
     end
   end
 
-  defp handle_missing_association(data, serializer, opts, association_type, on_missing, field_name) do
+  defp handle_missing_association(
+         data,
+         serializer,
+         opts,
+         association_type,
+         on_missing,
+         field_name
+       ) do
     case data do
       nil when on_missing == :null ->
         nil
@@ -561,13 +568,28 @@ defmodule NbSerializer.Compiler.Runtime do
   defp serialize_association([], _serializer, _opts, :many, _field_name), do: []
 
   # Handle Ecto.Association.NotLoaded
-  defp serialize_association(%Ecto.Association.NotLoaded{}, _serializer, _opts, :one, _field_name), do: nil
+  defp serialize_association(
+         %Ecto.Association.NotLoaded{},
+         _serializer,
+         _opts,
+         :one,
+         _field_name
+       ),
+       do: nil
 
-  defp serialize_association(%Ecto.Association.NotLoaded{}, _serializer, _opts, :many, _field_name), do: []
+  defp serialize_association(
+         %Ecto.Association.NotLoaded{},
+         _serializer,
+         _opts,
+         :many,
+         _field_name
+       ),
+       do: []
 
   defp serialize_association(data, nil, _opts, _cardinality, _field_name), do: data
 
-  defp serialize_association(data, serializer, opts, cardinality, field_name) when not is_nil(serializer) do
+  defp serialize_association(data, serializer, opts, cardinality, field_name)
+       when not is_nil(serializer) do
     # Check within option to control circular references
     within = get_opt(opts, :within, nil)
 
@@ -630,9 +652,11 @@ defmodule NbSerializer.Compiler.Runtime do
   defp serialize_polymorphic(nil, _polymorphic, _opts, :one, _module), do: nil
   defp serialize_polymorphic(nil, _polymorphic, _opts, :many, _module), do: []
 
-  defp serialize_polymorphic(%Ecto.Association.NotLoaded{}, _polymorphic, _opts, :one, _module), do: nil
+  defp serialize_polymorphic(%Ecto.Association.NotLoaded{}, _polymorphic, _opts, :one, _module),
+    do: nil
 
-  defp serialize_polymorphic(%Ecto.Association.NotLoaded{}, _polymorphic, _opts, :many, _module), do: []
+  defp serialize_polymorphic(%Ecto.Association.NotLoaded{}, _polymorphic, _opts, :many, _module),
+    do: []
 
   defp serialize_polymorphic(data, polymorphic, opts, :one, module) do
     # Check max_depth for polymorphic associations too
@@ -679,7 +703,8 @@ defmodule NbSerializer.Compiler.Runtime do
     end
   end
 
-  defp detect_polymorphic_serializer(data, detector, _opts, _module) when is_function(detector, 1) do
+  defp detect_polymorphic_serializer(data, detector, _opts, _module)
+       when is_function(detector, 1) do
     # Use custom detection function
     detector.(data)
   end

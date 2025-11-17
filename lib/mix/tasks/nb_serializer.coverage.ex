@@ -80,7 +80,7 @@ defmodule Mix.Tasks.NbSerializer.Coverage do
     # First try the registry if it's running (moved to nb_ts library)
     registered =
       if Process.whereis(NbTs.Registry) do
-        NbTs.Registry.all_serializers()
+        apply(NbTs.Registry, :all_serializers, [])
       else
         []
       end
