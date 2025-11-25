@@ -26,7 +26,7 @@ Add `nb_serializer` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:nb_serializer, "~> 0.1.0"}
+    {:nb_serializer, github: "nordbeam/nb_serializer"}
   ]
 end
 ```
@@ -772,7 +772,7 @@ Automatic TypeScript interface generation from NbSerializer schemas:
 # mix.exs
 def deps do
   [
-    {:nb_ts, "~> 0.1.0"}
+    {:nb_ts, github: "nordbeam/nb_ts"}
   ]
 end
 ```
@@ -806,7 +806,7 @@ Seamless Inertia.js integration with automatic serialization:
 # mix.exs
 def deps do
   [
-    {:nb_inertia, "~> 0.1.0"}
+    {:nb_inertia, github: "nordbeam/nb_inertia"}
   ]
 end
 ```
