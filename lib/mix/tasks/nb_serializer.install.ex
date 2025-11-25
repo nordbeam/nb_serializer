@@ -123,8 +123,9 @@ if Code.ensure_loaded?(Igniter.Mix.Task) do
     defp maybe_add_ecto(igniter, _), do: igniter
 
     defp maybe_add_phoenix(igniter, true) do
+      # Don't add phoenix dep - it should already be present in Phoenix apps
+      # Just add plug which might not be a direct dependency
       igniter
-      |> Igniter.Project.Deps.add_dep({:phoenix, "~> 1.7"})
       |> Igniter.Project.Deps.add_dep({:plug, "~> 1.14"})
     end
 
@@ -270,7 +271,7 @@ if Code.ensure_loaded?(Igniter.Mix.Task) do
 
         # Field with transformation
         # Format DateTime to ISO8601 string
-        field :published_at, :datetime, transform: &format_datetime/1
+        field :published_at, :datetime, transform: :format_datetime
 
         # Computed field with pattern matching
         field :status_label, :string, compute: :format_status
@@ -298,9 +299,9 @@ if Code.ensure_loaded?(Igniter.Mix.Task) do
 
       # Transform function
       # Formats DateTime to ISO8601 string
-      defp format_datetime(%DateTime{} = dt), do: DateTime.to_iso8601(dt)
-      defp format_datetime(nil), do: nil
-      defp format_datetime(value), do: value
+      def format_datetime(%DateTime{} = dt), do: DateTime.to_iso8601(dt)
+      def format_datetime(nil), do: nil
+      def format_datetime(value), do: value
 
       # Computed field with pattern matching
       # Returns user-friendly status labels
