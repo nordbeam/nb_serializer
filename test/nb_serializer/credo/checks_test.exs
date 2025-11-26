@@ -6,6 +6,7 @@ defmodule NbSerializer.Credo.ChecksTest do
   alias NbSerializer.Credo.Check.Warning.InconsistentNumericTypes
   alias NbSerializer.Credo.Check.Warning.DatetimeAsString
   alias NbSerializer.Credo.Check.Warning.MissingDatetimeFormat
+  alias NbSerializer.Credo.Check.Warning.GenericMapType
   alias NbSerializer.Credo.Check.Readability.MissingModuledoc
   alias NbSerializer.Credo.Check.Design.LargeSchema
   alias NbSerializer.Credo.Check.Design.SimpleFieldCompute
@@ -266,6 +267,90 @@ defmodule NbSerializer.Credo.ChecksTest do
       """
 
       issues = run_check(MissingDatetimeFormat, source)
+      assert issues == []
+    end
+  end
+
+  describe "GenericMapType" do
+    test "warns when using :map type" do
+      source = """
+      defmodule MyApp.WidgetSerializer do
+        use NbSerializer.Serializer
+
+        schema do
+          field :config, :map
+        end
+      end
+      """
+
+      issues = run_check(GenericMapType, source)
+      assert length(issues) == 1
+      assert hd(issues).message =~ ":config"
+      assert hd(issues).message =~ ":map"
+      assert hd(issues).message =~ "serializer"
+    end
+
+    test "warns for multiple :map fields" do
+      source = """
+      defmodule MyApp.SettingsSerializer do
+        use NbSerializer.Serializer
+
+        schema do
+          field :config, :map
+          field :metadata, :map
+          field :preferences, :map
+        end
+      end
+      """
+
+      issues = run_check(GenericMapType, source)
+      assert length(issues) == 3
+    end
+
+    test "does not warn when using serializer option" do
+      source = """
+      defmodule MyApp.WidgetSerializer do
+        use NbSerializer.Serializer
+
+        schema do
+          field :config, serializer: ConfigSerializer
+        end
+      end
+      """
+
+      issues = run_check(GenericMapType, source)
+      assert issues == []
+    end
+
+    test "does not warn when using has_one" do
+      source = """
+      defmodule MyApp.WidgetSerializer do
+        use NbSerializer.Serializer
+
+        schema do
+          has_one :config, ConfigSerializer
+        end
+      end
+      """
+
+      issues = run_check(GenericMapType, source)
+      assert issues == []
+    end
+
+    test "does not warn for other types" do
+      source = """
+      defmodule MyApp.UserSerializer do
+        use NbSerializer.Serializer
+
+        schema do
+          field :id, :number
+          field :name, :string
+          field :active, :boolean
+        end
+      end
+      """
+
+      issues = run_check(GenericMapType, source)
       assert issues == []
     end
   end
