@@ -434,6 +434,43 @@ defmodule NbSerializer do
   defp to_key(key) when is_binary(key), do: key
   defp to_key(key), do: to_string(key)
 
+  @doc """
+  Wraps a key to preserve its case during camelization.
+
+  When serializing maps, keys are normally converted from snake_case to camelCase.
+  Use this function to prevent camelization of specific keys - useful for identifiers
+  like airport codes (RTM, BRU), currency codes (USD, EUR), or other literal string keys.
+
+  ## Examples
+
+      # In a custom serializer that handles a map of airports by code:
+      defmodule AirportsSerializer do
+        import NbSerializer, only: [preserve_case: 1]
+
+        def serialize(airports, opts) when is_map(airports) do
+          Map.new(airports, fn {code, airport} ->
+            {preserve_case(code), AirportSerializer.serialize(airport, opts)}
+          end)
+        end
+      end
+
+      # Results in:
+      %{
+        "RTM" => %{code: "RTM", name: "Rotterdam..."},  # Key preserved
+        "BRU" => %{code: "BRU", name: "Brussels..."}    # Key preserved
+      }
+
+      # Without preserve_case, keys would be camelized:
+      %{
+        "rTM" => ...,  # Incorrectly camelized
+        "bRU" => ...   # Incorrectly camelized
+      }
+  """
+  @spec preserve_case(atom() | String.t()) :: {:preserve, atom() | String.t()}
+  def preserve_case(key) when is_atom(key) or is_binary(key) do
+    {:preserve, key}
+  end
+
   # Camelization support
 
   defp maybe_camelize(serialized, opts) do
@@ -452,7 +489,9 @@ defmodule NbSerializer do
 
   defp camelize_keys(data) when is_map(data) do
     data
-    |> Enum.map(&{camelize_key(elem(&1, 0)), camelize_keys(elem(&1, 1))})
+    |> Enum.map(fn {key, value} ->
+      {camelize_key(key), camelize_keys(value)}
+    end)
     |> Map.new()
   end
 
@@ -461,6 +500,9 @@ defmodule NbSerializer do
   end
 
   defp camelize_keys(data), do: data
+
+  # Handle {:preserve, key} - unwrap and keep key as-is
+  defp camelize_key({:preserve, key}), do: key
 
   defp camelize_key(key) when is_atom(key) do
     key
