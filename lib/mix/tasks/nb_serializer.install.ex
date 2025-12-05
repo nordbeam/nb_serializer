@@ -132,6 +132,8 @@ if Code.ensure_loaded?(Igniter.Mix.Task) do
     defp maybe_add_phoenix(igniter, _), do: igniter
 
     defp maybe_add_typescript(igniter, true) do
+      yes? = igniter.args.options[:yes] || false
+
       # Add nb_ts dependency if not already present
       igniter =
         case Igniter.Project.Deps.get_dep(igniter, :nb_ts) do
@@ -143,7 +145,11 @@ if Code.ensure_loaded?(Igniter.Mix.Task) do
         end
 
       # Fetch and compile nb_ts so its installer is available
-      igniter = Igniter.apply_and_fetch_dependencies(igniter, operation: "installing nb_ts")
+      igniter =
+        Igniter.apply_and_fetch_dependencies(igniter,
+          operation: "installing nb_ts",
+          yes: yes?
+        )
 
       # Now compose the nb_ts installer to set up TypeScript type generation
       Igniter.compose_task(igniter, "nb_ts.install", ["--output-dir", "assets/js/types"])

@@ -18,6 +18,8 @@ A fast and declarative JSON serialization library for Elixir, inspired by Alba f
 - 🔌 **Protocol-based extensibility** - Extend formatting and transformation for custom types
 - ⚡ **Parallel processing** - Automatic parallelization of relationship loading
 - ✅ **Compile-time validation** - Struct field validation at compile time
+- 🔧 **Credo checks** - 8 custom Credo checks for serializer code quality
+- 📁 **Namespace support** - Organize TypeScript files with namespace prefixes
 
 ## Installation
 
@@ -367,6 +369,74 @@ within1 = [author: [books: []]]
 within2 = [author: [posts: []], comments: []]
 merged = Within.merge(within1, within2)
 # => [author: [books: [], posts: []], comments: []]
+```
+
+### Preserving Key Case
+
+When serializing data that should keep its original key case (like airport codes, currency codes, or API responses from external services), use `preserve_case/1`:
+
+```elixir
+defmodule FlightSerializer do
+  use NbSerializer.Serializer
+  import NbSerializer, only: [preserve_case: 1]
+
+  schema do
+    field :id, :number
+    field :departure, :string
+    field :arrival, :string
+    field :airport_data, :map, compute: :format_airports
+  end
+
+  def format_airports(%{airports: airports}, _opts) do
+    # Keys like "JFK", "LAX", "SFO" won't be camelized
+    preserve_case(airports)
+  end
+end
+
+# Without preserve_case: %{jfk: "...", lax: "..."}
+# With preserve_case:    %{JFK: "...", LAX: "..."}
+```
+
+**Use cases:**
+- Airport codes (JFK, LAX, SFO)
+- Currency codes (USD, EUR, GBP)
+- External API response data
+- Case-sensitive identifiers
+
+### Namespace for TypeScript Files
+
+Organize generated TypeScript files into directories using the `namespace` macro:
+
+```elixir
+defmodule MyApp.Admin.UserSerializer do
+  use NbSerializer.Serializer
+
+  namespace "Admin"  # Files generated in types/Admin/
+
+  schema do
+    field :id, :number
+    field :name, :string
+  end
+end
+```
+
+This generates `types/Admin/User.ts` instead of `types/User.ts`.
+
+### Custom TypeScript Interface Names
+
+Override the default interface name with `typescript_name`:
+
+```elixir
+defmodule MyApp.API.V2.UserResponseSerializer do
+  use NbSerializer.Serializer
+
+  typescript_name "UserV2Response"  # Instead of "UserResponseSerializer"
+
+  schema do
+    field :data, :map
+    field :meta, :map
+  end
+end
 ```
 
 ### Parallel Relationship Loading
@@ -759,6 +829,39 @@ lib/
 5. **Protocol-Based Extensibility** - Use Elixir protocols for custom type formatting
 6. **Idiomatic Elixir** - Follows Elixir best practices (behaviours, protocols, function capturing, `with` statements)
 7. **Performance-Conscious** - Automatic parallelization, streaming support, and efficient compilation
+
+## Credo Checks
+
+NbSerializer includes 8 custom Credo checks for code quality:
+
+| Check ID | Check | Priority | Description |
+|----------|-------|----------|-------------|
+| EX6010 | `InvalidNestedSerializerType` | HIGH | Detects invalid nested serializer references |
+| EX6011 | `OptionalVsNullable` | HIGH | Warns about confusion between `optional` and `nullable` |
+| EX6012 | `InconsistentNumericTypes` | NORMAL | Detects mixing `:number` and `:integer` types |
+| EX6013 | `DatetimeAsString` | NORMAL | Warns when datetime fields use `:string` type |
+| EX6014 | `MissingDatetimeFormat` | NORMAL | Warns when datetime fields lack format specification |
+| EX6015 | `MissingModuledoc` | LOW | Detects serializers without module documentation |
+| EX6016 | `LargeSchema` | LOW | Warns when schema has too many fields (configurable) |
+| EX6017 | `SimpleFieldCompute` | LOW | Suggests simpler alternatives for trivial computed fields |
+
+Enable in `.credo.exs`:
+
+```elixir
+%{
+  configs: [
+    %{
+      checks: [
+        {NbSerializer.Credo.InvalidNestedSerializerType, []},
+        {NbSerializer.Credo.OptionalVsNullable, []},
+        {NbSerializer.Credo.InconsistentNumericTypes, []},
+        {NbSerializer.Credo.LargeSchema, [max_fields: 20]},
+        # ... other checks
+      ]
+    }
+  ]
+}
+```
 
 ## Related Libraries
 
