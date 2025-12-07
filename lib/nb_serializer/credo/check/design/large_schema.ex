@@ -48,7 +48,7 @@ if Code.ensure_loaded?(Credo.Check) do
       base_priority: :low,
       category: :design,
       param_defaults: [
-        max_fields: 40
+        max_fields: 80
       ],
       explanations: [
         check: """
@@ -62,7 +62,7 @@ if Code.ensure_loaded?(Credo.Check) do
         - UserDetailSerializer for detail views
         """,
         params: [
-          max_fields: "Maximum number of fields before warning (default: 40)"
+          max_fields: "Maximum number of fields before warning (default: 80)"
         ]
       ]
 
