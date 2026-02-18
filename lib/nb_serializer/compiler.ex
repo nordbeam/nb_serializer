@@ -250,6 +250,7 @@ defmodule NbSerializer.Compiler.Runtime do
 
   def process_fields(data, opts, fields, module) do
     fields
+    |> filter_by_selection(opts)
     |> Enum.filter(&should_include?(data, opts, elem(&1, 1), module))
     |> Enum.reduce(%{}, fn {field_name, field_opts}, acc ->
       case safe_get_field_value(data, field_name, field_opts, opts, module) do
@@ -257,6 +258,22 @@ defmodule NbSerializer.Compiler.Runtime do
         {:skip, _} -> acc
       end
     end)
+  end
+
+  defp filter_by_selection(fields, opts) do
+    only = get_opt(opts, :only, nil)
+    except = get_opt(opts, :except, nil)
+
+    cond do
+      is_list(only) and only != [] ->
+        Enum.filter(fields, fn {name, _} -> name in only end)
+
+      is_list(except) and except != [] ->
+        Enum.reject(fields, fn {name, _} -> name in except end)
+
+      true ->
+        fields
+    end
   end
 
   def process_relationships(data, opts, relationships, module) do
@@ -561,7 +578,16 @@ defmodule NbSerializer.Compiler.Runtime do
     end
   end
 
-  defp check_within_permission(_within, _field_name), do: {true, nil}
+  defp check_within_permission(invalid, _field_name) do
+    require Logger
+
+    Logger.warning(
+      "Invalid :within option: #{inspect(invalid)}. " <>
+        "Expected nil, a keyword list, or a list of atoms. Ignoring."
+    )
+
+    {true, nil}
+  end
 
   defp serialize_association(nil, _serializer, _opts, :one, _field_name), do: nil
   defp serialize_association(nil, _serializer, _opts, :many, _field_name), do: []

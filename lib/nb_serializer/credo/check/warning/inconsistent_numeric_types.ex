@@ -86,7 +86,8 @@ if Code.ensure_loaded?(Credo.Check) do
     defp issue_for(issue_meta, line_no, field_name, type) do
       format_issue(
         issue_meta,
-        message: "Field `:#{field_name}` uses `:#{type}`. Consider using `:number` for consistency.",
+        message:
+          "Field `:#{field_name}` uses `:#{type}`. Consider using `:number` for consistency.",
         trigger: "field",
         line_no: line_no
       )

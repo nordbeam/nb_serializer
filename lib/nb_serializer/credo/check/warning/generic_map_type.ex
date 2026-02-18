@@ -85,7 +85,8 @@ if Code.ensure_loaded?(Credo.Check) do
     end
 
     # Match field :name, :map
-    defp traverse({:field, meta, [field_name, :map | _rest]} = ast, state) when is_atom(field_name) do
+    defp traverse({:field, meta, [field_name, :map | _rest]} = ast, state)
+         when is_atom(field_name) do
       new_issue = issue_for(state.issue_meta, meta[:line], field_name)
       {ast, %{state | issues: [new_issue | state.issues]}}
     end

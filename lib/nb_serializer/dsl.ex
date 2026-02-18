@@ -164,7 +164,13 @@ defmodule NbSerializer.DSL do
     * `:transform` - Atom name of a function to transform the field value
     * `:format` - Format the field value using built-in or custom formatters
     * `:if` - Atom name of a function that returns boolean for conditional inclusion
-    * `:on_error` - How to handle errors: :null, :skip, {:default, value}, or :reraise
+    * `:on_error` - How to handle errors during field computation:
+      * `:null` - Return nil on error
+      * `:skip` - Omit the field from output on error
+      * `{:default, value}` - Return the given default value on error
+      * `:reraise` - Wrap the error in a `NbSerializer.SerializationError` and re-raise
+      * `:my_handler` (atom) - Call a named function in the serializer module with
+        signature `my_handler(error, data, opts)` that returns the fallback value
 
   ## Examples
 
@@ -471,7 +477,8 @@ defmodule NbSerializer.DSL do
   # Shorthand: has_one :config, WidgetConfigSerializer
   defmacro has_one(name, serializer_module) do
     quote do
-      @nb_serializer_relationships {:has_one, unquote(name), [serializer: unquote(serializer_module)]}
+      @nb_serializer_relationships {:has_one, unquote(name),
+                                    [serializer: unquote(serializer_module)]}
     end
   end
 
@@ -519,7 +526,8 @@ defmodule NbSerializer.DSL do
   # Shorthand: has_many :comments, CommentSerializer
   defmacro has_many(name, serializer_module) do
     quote do
-      @nb_serializer_relationships {:has_many, unquote(name), [serializer: unquote(serializer_module)]}
+      @nb_serializer_relationships {:has_many, unquote(name),
+                                    [serializer: unquote(serializer_module)]}
     end
   end
 
@@ -565,7 +573,8 @@ defmodule NbSerializer.DSL do
   # Shorthand: belongs_to :user, UserSerializer
   defmacro belongs_to(name, serializer_module) do
     quote do
-      @nb_serializer_relationships {:has_one, unquote(name), [serializer: unquote(serializer_module)]}
+      @nb_serializer_relationships {:has_one, unquote(name),
+                                    [serializer: unquote(serializer_module)]}
     end
   end
 end

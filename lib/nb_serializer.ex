@@ -82,8 +82,10 @@ defmodule NbSerializer do
 
     * `:view` - The view context for conditional serialization
     * `:current_scope` - The authorization scope for permission checks (user, organization, API client, etc.)
+    * `:only` - List of field names to include (e.g., `only: [:id, :name]`). Mutually exclusive with `:except`
+    * `:except` - List of field names to exclude (e.g., `except: [:email]`). Mutually exclusive with `:only`
     * `:include` - List of associations to include
-    * `:exclude` - List of fields to exclude
+    * `:exclude` - List of associations to exclude
     * `:root` - Root key to wrap the serialized data
     * `:meta` - Metadata to include in the response
     * `:page` - Current page number (adds pagination metadata)
@@ -92,6 +94,8 @@ defmodule NbSerializer do
     * `:within` - Control which associations to serialize (see Circular References below)
     * `:max_depth` - Maximum nesting depth to prevent infinite recursion (default: 10)
     * `:camelize` - Convert keys to camelCase (default: uses config, falls back to `true`)
+    * `:parallel_threshold` - Minimum number of relationships to trigger parallel processing (default: 3)
+    * `:relationship_timeout` - Timeout in ms for parallel relationship processing (default: 30,000)
 
   ## Circular References
 
@@ -251,6 +255,18 @@ defmodule NbSerializer do
     case NbSerializer.Registry.lookup(data) do
       {:ok, serializer} ->
         serialize(serializer, data, opts)
+
+      {:error, :registry_not_started} ->
+        {:error,
+         %NbSerializer.SerializationError{
+           message:
+             "NbSerializer.Registry is not started. " <>
+               "Add NbSerializer.Registry to your application supervision tree:\n\n" <>
+               "    children = [\n" <>
+               "      NbSerializer.Registry,\n" <>
+               "      # ... other children\n" <>
+               "    ]"
+         }}
 
       {:error, :not_found} ->
         {:error,
@@ -473,6 +489,8 @@ defmodule NbSerializer do
 
   # Camelization support
 
+  @camelize_max_depth 64
+
   defp maybe_camelize(serialized, opts) do
     should_camelize =
       case Keyword.get(opts, :camelize) do
@@ -481,25 +499,25 @@ defmodule NbSerializer do
       end
 
     if should_camelize do
-      camelize_keys(serialized)
+      camelize_keys(serialized, 0)
     else
       serialized
     end
   end
 
-  defp camelize_keys(data) when is_map(data) do
+  defp camelize_keys(data, depth) when is_map(data) and depth < @camelize_max_depth do
     data
     |> Enum.map(fn {key, value} ->
-      {camelize_key(key), camelize_keys(value)}
+      {camelize_key(key), camelize_keys(value, depth + 1)}
     end)
     |> Map.new()
   end
 
-  defp camelize_keys(data) when is_list(data) do
-    Enum.map(data, &camelize_keys(&1))
+  defp camelize_keys(data, depth) when is_list(data) and depth < @camelize_max_depth do
+    Enum.map(data, &camelize_keys(&1, depth + 1))
   end
 
-  defp camelize_keys(data), do: data
+  defp camelize_keys(data, _depth), do: data
 
   # Handle {:preserve, key} - unwrap and keep key as-is
   defp camelize_key({:preserve, key}), do: key

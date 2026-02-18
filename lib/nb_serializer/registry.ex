@@ -85,13 +85,18 @@ defmodule NbSerializer.Registry do
       {:error, :not_found}
 
   """
-  @spec lookup(module() | struct()) :: {:ok, module()} | {:error, :not_found}
+  @spec lookup(module() | struct()) ::
+          {:ok, module()} | {:error, :not_found | :registry_not_started}
   def lookup(struct) when is_struct(struct) do
     lookup(struct.__struct__)
   end
 
   def lookup(struct_module) when is_atom(struct_module) do
-    GenServer.call(@registry_name, {:lookup, struct_module})
+    if Process.whereis(@registry_name) do
+      GenServer.call(@registry_name, {:lookup, struct_module})
+    else
+      {:error, :registry_not_started}
+    end
   end
 
   @doc """

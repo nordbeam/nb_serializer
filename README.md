@@ -725,11 +725,72 @@ defmodule SafeSerializer do
 end
 ```
 
+### Custom Error Handlers
+
+Use a named function as an error handler for full control:
+
+```elixir
+defmodule OrderSerializer do
+  use NbSerializer.Serializer
+
+  schema do
+    field :id, :number
+    field :total, :number, compute: :calculate_total, on_error: :handle_total_error
+  end
+
+  def calculate_total(order, _opts) do
+    # might fail if line_items is nil
+    Enum.sum(Enum.map(order.line_items, & &1.price))
+  end
+
+  # Called with (error, data, opts) — return a fallback value
+  def handle_total_error(_error, _data, _opts) do
+    0
+  end
+end
+```
+
+## Field Selection at Call Site
+
+Select specific fields without defining a separate serializer:
+
+```elixir
+# Only include specific fields
+NbSerializer.serialize(UserSerializer, user, only: [:id, :name])
+# => {:ok, %{id: 1, name: "John"}}
+
+# Exclude specific fields
+NbSerializer.serialize(UserSerializer, user, except: [:email, :phone])
+# => {:ok, %{id: 1, name: "John", active: true}}
+```
+
 ## Performance Features
 
 ### Performance Monitoring
 
-NbSerializer includes a telemetry module for future performance monitoring integration. While telemetry events are not currently emitted during serialization, the module structure is in place for adding instrumentation.
+NbSerializer emits telemetry events via `:telemetry.span/3` for every serialization call.
+
+Events emitted:
+
+- `[:nb_serializer, :serialize, :start]` — serialization begins
+- `[:nb_serializer, :serialize, :stop]` — serialization completed (includes `:duration` and `:fields_count`)
+- `[:nb_serializer, :serialize, :exception]` — serialization failed
+
+```elixir
+# Attach a handler
+:telemetry.attach(
+  "nb-serializer-logger",
+  [:nb_serializer, :serialize, :stop],
+  fn _event, measurements, metadata, _config ->
+    duration_ms = System.convert_time_unit(measurements.duration, :native, :millisecond)
+    IO.puts("Serialized with #{inspect(metadata.serializer)} in #{duration_ms}ms")
+  end,
+  nil
+)
+
+# Or use the built-in logger for development
+NbSerializer.Telemetry.attach_default_logger(level: :debug)
+```
 
 ### Compile-Time Optimizations
 
@@ -760,6 +821,10 @@ All serialization functions accept these options:
 
 ```elixir
 NbSerializer.serialize(UserSerializer, user,
+  # Field selection
+  only: [:id, :name, :email],       # Only include these fields
+  except: [:password_hash],          # Exclude these fields
+
   # Circular reference control
   within: [author: [books: []]],
   max_depth: 5,
@@ -768,8 +833,8 @@ NbSerializer.serialize(UserSerializer, user,
   use_protocol: true,
 
   # Parallel relationship loading
-  parallel_threshold: 3,
-  relationship_timeout: 30_000,
+  parallel_threshold: 3,            # Min relationships to parallelize (default: 3)
+  relationship_timeout: 30_000,     # Timeout per relationship in ms (default: 30,000)
 
   # View and scope
   view: :detailed,
