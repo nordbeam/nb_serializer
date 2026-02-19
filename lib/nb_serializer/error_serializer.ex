@@ -6,11 +6,18 @@ defmodule NbSerializer.ErrorSerializer do
 
   ## Usage
 
-      # Simple error
+      # Structured error (uses schema)
       NbSerializer.ErrorSerializer.serialize(%{
         error: "Not Found",
         message: "The requested resource was not found"
       })
+
+      # Flat field errors (passed through as-is)
+      NbSerializer.ErrorSerializer.serialize(%{
+        name: "can't be blank",
+        email: "has invalid format"
+      })
+      # => %{name: "can't be blank", email: "has invalid format"}
 
       # Changeset errors
       NbSerializer.ErrorSerializer.serialize_changeset(changeset)
@@ -43,6 +50,9 @@ defmodule NbSerializer.ErrorSerializer do
 
   use NbSerializer.Serializer
 
+  # Fields that indicate a structured error response (vs flat field errors)
+  @known_fields MapSet.new(~w(error message code status details field)a)
+
   schema do
     field(:error, :string, optional: true)
     field(:message, :string, optional: true)
@@ -51,6 +61,18 @@ defmodule NbSerializer.ErrorSerializer do
     field(:details, :any, optional: true)
     field(:field, :string, optional: true)
   end
+
+  # Override serialize to handle flat field error maps.
+  # Maps like %{slug: "taken", name: "can't be blank"} (from Inertia.Errors.to_errors)
+  # are passed through as-is instead of being forced through the schema (which drops them).
+  def serialize(nil, _opts), do: nil
+  def serialize(data, opts) when is_list(data), do: Enum.map(data, &serialize(&1, opts))
+
+  def serialize(%{} = data, opts) when not is_struct(data) do
+    if flat_field_errors?(data), do: data, else: super(data, opts)
+  end
+
+  def serialize(data, opts), do: super(data, opts)
 
   @doc """
   Serializes an Ecto changeset into a standard error format.
@@ -159,4 +181,13 @@ defmodule NbSerializer.ErrorSerializer do
   end
 
   defp extract_nested_errors(_), do: %{}
+
+  # A map is considered "flat field errors" if none of its keys match the schema fields.
+  # e.g., %{slug: "taken", name: "can't be blank"} → true (pass through)
+  # e.g., %{error: "Not Found", message: "..."} → false (use schema)
+  defp flat_field_errors?(data) when map_size(data) == 0, do: true
+
+  defp flat_field_errors?(data) do
+    not Enum.any?(Map.keys(data), &MapSet.member?(@known_fields, &1))
+  end
 end

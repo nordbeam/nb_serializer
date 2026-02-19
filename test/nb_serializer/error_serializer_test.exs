@@ -109,6 +109,57 @@ defmodule NbSerializer.ErrorSerializerTest do
       assert "must contain an uppercase letter" in result[:details][:password]
     end
 
+    test "passes through flat field error maps" do
+      # Flat field errors like those from Inertia.Errors.to_errors(changeset)
+      errors = %{slug: "This name is already taken", name: "can't be blank"}
+
+      result = NbSerializer.ErrorSerializer.serialize(errors)
+
+      assert result == %{slug: "This name is already taken", name: "can't be blank"}
+    end
+
+    test "passes through single flat field error" do
+      errors = %{email: "has invalid format"}
+
+      result = NbSerializer.ErrorSerializer.serialize(errors)
+
+      assert result == %{email: "has invalid format"}
+    end
+
+    test "passes through empty map" do
+      result = NbSerializer.ErrorSerializer.serialize(%{})
+
+      assert result == %{}
+    end
+
+    test "serializes nil as nil" do
+      assert NbSerializer.ErrorSerializer.serialize(nil) == nil
+    end
+
+    test "serializes list of errors" do
+      errors = [
+        %{error: "Bad Request", message: "Invalid input"},
+        %{error: "Not Found", message: "Resource missing"}
+      ]
+
+      result = NbSerializer.ErrorSerializer.serialize(errors)
+
+      assert length(result) == 2
+      assert Enum.at(result, 0)[:error] == "Bad Request"
+      assert Enum.at(result, 1)[:error] == "Not Found"
+    end
+
+    test "uses schema when any known field is present" do
+      # Has 'error' key which is a known schema field → uses schema serialization
+      error = %{error: "Validation Failed", name: "can't be blank"}
+
+      result = NbSerializer.ErrorSerializer.serialize(error)
+
+      assert result[:error] == "Validation Failed"
+      # 'name' is not in the schema so it's dropped by schema serialization
+      refute Map.has_key?(result, :name)
+    end
+
     test "handles empty changeset" do
       changeset = %{
         errors: [],

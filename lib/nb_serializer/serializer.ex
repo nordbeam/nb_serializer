@@ -80,6 +80,8 @@ defmodule NbSerializer.Serializer do
         serialize_one(data, opts)
       end
 
+      defoverridable serialize: 1, serialize: 2
+
       defp serialize_one(nil, _opts), do: nil
 
       defp serialize_one(data, opts) do
