@@ -143,7 +143,7 @@ defmodule NbSerializerTest do
                id: 1,
                name: "Alice",
                email: "alice@example.com",
-               created_at: ~U[2024-01-01 12:00:00Z]
+               created_at: "2024-01-01T12:00:00Z"
              }
     end
 
@@ -169,7 +169,7 @@ defmodule NbSerializerTest do
       assert result == %{
                id: 1,
                full_name: "Bob",
-               created_timestamp: ~U[2024-01-01 12:00:00Z]
+               created_timestamp: "2024-01-01T12:00:00Z"
              }
     end
 

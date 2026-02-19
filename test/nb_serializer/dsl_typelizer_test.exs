@@ -58,8 +58,8 @@ defmodule NbSerializer.DSLTypelizerTest do
 
       assert {:id, [type: :uuid]} in fields
       assert {:price, [type: :decimal]} in fields
-      assert {:created_at, [type: :datetime]} in fields
-      assert {:birth_date, [type: :date]} in fields
+      assert {:created_at, [format: :iso8601, type: :datetime]} in fields
+      assert {:birth_date, [format: :iso8601, type: :date]} in fields
     end
   end
 

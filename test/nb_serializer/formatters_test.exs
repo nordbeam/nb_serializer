@@ -226,7 +226,8 @@ defmodule NbSerializer.FormattersTest do
 
       {:ok, result} = NbSerializer.serialize(SafeFormatSerializer, data)
 
-      assert result[:date] == nil
+      # String values pass through iso8601 formatter unchanged
+      assert result[:date] == "not a date"
       assert result[:amount] == "N/A"
     end
   end

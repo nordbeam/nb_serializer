@@ -48,6 +48,10 @@ defmodule NbSerializer.Formatters do
     Date.to_iso8601(date)
   end
 
+  def iso8601(nil), do: nil
+
+  def iso8601(value) when is_binary(value), do: value
+
   def iso8601(value) do
     raise ArgumentError,
           "Expected a DateTime, NaiveDateTime, or Date for ISO8601 formatting, got: #{inspect(value)}"

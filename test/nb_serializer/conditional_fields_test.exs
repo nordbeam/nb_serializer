@@ -205,7 +205,7 @@ defmodule NbSerializer.ConditionalFieldsTest do
                id: 1,
                name: "User",
                email: "user@example.com",
-               created_at: ~U[2024-01-01 12:00:00Z]
+               created_at: "2024-01-01T12:00:00Z"
              }
     end
   end

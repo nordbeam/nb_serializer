@@ -284,6 +284,14 @@ defmodule NbSerializer.DSL do
                  :datetime,
                  :any
                ] do
+              # Auto-format datetime/date to ISO 8601 by default
+              type_opts =
+                if atom in [:datetime, :date] do
+                  Keyword.put(type_opts, :format, :iso8601)
+                else
+                  type_opts
+                end
+
               type_opts
             else
               # Treat as option key if not a valid type
@@ -413,8 +421,16 @@ defmodule NbSerializer.DSL do
   # Handle field :name, :string, opts (3-arity for backwards compat)
   defmacro field(name, type, opts) when is_atom(name) and is_atom(type) and is_list(opts) do
     quote do
+      # Auto-format datetime/date to ISO 8601 unless an explicit format is given
+      base_opts =
+        if unquote(type) in [:datetime, :date] and not Keyword.has_key?(unquote(opts), :format) do
+          Keyword.put(unquote(opts), :format, :iso8601)
+        else
+          unquote(opts)
+        end
+
       merged_opts =
-        unquote(opts)
+        base_opts
         |> Keyword.put(:type, unquote(type))
         |> Keyword.put(:__field__, unquote(name))
         |> Keyword.put(:__serializer__, __MODULE__)

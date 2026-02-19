@@ -581,9 +581,9 @@ defmodule NbSerializer.EdgeCaseTest do
 
       {:ok, result} = NbSerializer.serialize(DateTimeEdgeSerializer, data)
 
-      assert result.date == ~D[2024-01-15]
+      assert result.date == "2024-01-15"
       assert result.time == ~T[13:30:00]
-      assert result.datetime == ~U[2024-01-15 13:30:00Z]
+      assert result.datetime == "2024-01-15T13:30:00Z"
       assert result.naive_datetime == ~N[2024-01-15 13:30:00]
 
       # These should all encode to JSON properly

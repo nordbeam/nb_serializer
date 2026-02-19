@@ -92,7 +92,7 @@ defmodule NbSerializer.EctoTest do
                id: 1,
                name: "John Doe",
                email: "john@example.com",
-               inserted_at: now
+               inserted_at: DateTime.to_iso8601(now)
              }
     end
 
