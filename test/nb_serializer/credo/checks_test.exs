@@ -2,8 +2,7 @@ defmodule NbSerializer.Credo.ChecksTest do
   use ExUnit.Case, async: false
 
   alias NbSerializer.Credo.Check.Warning.InvalidNestedSerializerType
-  alias NbSerializer.Credo.Check.Warning.OptionalVsNullable
-  alias NbSerializer.Credo.Check.Warning.InconsistentNumericTypes
+alias NbSerializer.Credo.Check.Warning.InconsistentNumericTypes
   alias NbSerializer.Credo.Check.Warning.DatetimeAsString
   alias NbSerializer.Credo.Check.Warning.MissingDatetimeFormat
   alias NbSerializer.Credo.Check.Warning.GenericMapType
@@ -65,40 +64,6 @@ defmodule NbSerializer.Credo.ChecksTest do
       """
 
       issues = run_check(InvalidNestedSerializerType, source)
-      assert issues == []
-    end
-  end
-
-  describe "OptionalVsNullable" do
-    test "warns when using optional: true" do
-      source = """
-      defmodule MyApp.EventSerializer do
-        use NbSerializer.Serializer
-
-        schema do
-          field :visitor_id, :string, optional: true
-        end
-      end
-      """
-
-      issues = run_check(OptionalVsNullable, source)
-      assert length(issues) == 1
-      assert hd(issues).message =~ ":visitor_id"
-      assert hd(issues).message =~ "nullable: true"
-    end
-
-    test "does not warn when using nullable: true" do
-      source = """
-      defmodule MyApp.EventSerializer do
-        use NbSerializer.Serializer
-
-        schema do
-          field :visitor_id, :string, nullable: true
-        end
-      end
-      """
-
-      issues = run_check(OptionalVsNullable, source)
       assert issues == []
     end
   end

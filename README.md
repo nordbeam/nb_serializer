@@ -897,12 +897,11 @@ lib/
 
 ## Credo Checks
 
-NbSerializer includes 8 custom Credo checks for code quality:
+NbSerializer includes 7 custom Credo checks for code quality:
 
 | Check ID | Check | Priority | Description |
 |----------|-------|----------|-------------|
 | EX6010 | `InvalidNestedSerializerType` | HIGH | Detects invalid nested serializer references |
-| EX6011 | `OptionalVsNullable` | HIGH | Warns about confusion between `optional` and `nullable` |
 | EX6012 | `InconsistentNumericTypes` | NORMAL | Detects mixing `:number` and `:integer` types |
 | EX6013 | `DatetimeAsString` | NORMAL | Warns when datetime fields use `:string` type |
 | EX6014 | `MissingDatetimeFormat` | NORMAL | Warns when datetime fields lack format specification |
@@ -918,7 +917,6 @@ Enable in `.credo.exs`:
     %{
       checks: [
         {NbSerializer.Credo.InvalidNestedSerializerType, []},
-        {NbSerializer.Credo.OptionalVsNullable, []},
         {NbSerializer.Credo.InconsistentNumericTypes, []},
         {NbSerializer.Credo.LargeSchema, [max_fields: 20]},
         # ... other checks
