@@ -93,9 +93,8 @@ if Code.ensure_loaded?(Credo.Check) do
       {ast, %{state | has_serializer_use: true}}
     end
 
-    # Track @moduledoc
-    defp traverse({:@, _meta, [{:moduledoc, _, [doc]}]} = ast, state)
-         when doc != false do
+    # Track @moduledoc (including @moduledoc false)
+    defp traverse({:@, _meta, [{:moduledoc, _, _}]} = ast, state) do
       {ast, %{state | has_moduledoc: true}}
     end
 
