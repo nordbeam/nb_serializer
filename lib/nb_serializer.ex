@@ -528,7 +528,7 @@ defmodule NbSerializer do
 
   defp strip_raw_markers(data), do: data
 
-  defp camelize_keys({:raw, value}), do: value
+  defp camelize_keys({:raw, value}, _depth), do: value
 
   defp camelize_keys(data, depth) when is_map(data) and depth < @camelize_max_depth do
     data
