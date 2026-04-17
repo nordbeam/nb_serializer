@@ -14,6 +14,7 @@ defmodule NbSerializer.DSL do
           nullable: boolean(),
           optional: boolean(),
           list: boolean(),
+          raw: boolean(),
           from: atom(),
           default: any(),
           compute: atom(),
@@ -132,6 +133,34 @@ defmodule NbSerializer.DSL do
   defmacro namespace(prefix) when is_binary(prefix) do
     quote do
       @typescript_namespace unquote(prefix)
+    end
+  end
+
+  @doc """
+  Preserves snake_case field names in generated TypeScript interfaces.
+
+  By default, nb_ts camelizes field names (`segment_id` → `segmentId`).
+  Use `snake_case true` when the serialized data uses snake_case keys
+  (e.g., raw JSON blobs passed through with `raw: true`).
+
+  ## Examples
+
+      defmodule WorkflowConfigs.DelayConfigSerializer do
+        use NbSerializer.Serializer
+
+        snake_case true
+
+        schema do
+          field :business_hours_only, :boolean, nullable: true
+        end
+      end
+
+      # Generates: business_hours_only?: boolean | null
+      # Instead of: businessHoursOnly?: boolean | null
+  """
+  defmacro snake_case(value \\ true) do
+    quote do
+      @nb_serializer_snake_case_ts unquote(value)
     end
   end
 

@@ -1,4 +1,4 @@
-if Code.ensure_loaded?(Igniter.Mix.Task) do
+if Code.ensure_loaded?(Igniter) do
   defmodule Mix.Tasks.NbSerializer.Install do
     @shortdoc "Installs and configures NbSerializer in your Phoenix application"
 
@@ -42,29 +42,37 @@ if Code.ensure_loaded?(Igniter.Mix.Task) do
 
     use Igniter.Mix.Task
 
+    @task_group :nb
+    @forwarded_child_flags ~w(--yes)
+    @schema [
+      with_ecto: :boolean,
+      with_phoenix: :boolean,
+      with_typescript: :boolean,
+      camelize_props: :boolean,
+      yes: :boolean
+    ]
+    @defaults [
+      with_ecto: false,
+      with_phoenix: false,
+      with_typescript: false,
+      camelize_props: false,
+      yes: false
+    ]
+
     @impl Igniter.Mix.Task
-    def info(_argv, _source) do
+    def info(argv, _source) do
+      options = installer_options(argv)
+
       %Igniter.Mix.Task.Info{
-        group: :nb,
+        group: @task_group,
         example: "mix nb_serializer.install --with-ecto --with-phoenix",
-        composes: ["deps.get"],
-        schema: [
-          with_ecto: :boolean,
-          with_phoenix: :boolean,
-          with_typescript: :boolean,
-          camelize_props: :boolean,
-          yes: :boolean
-        ],
+        composes: composed_tasks(options),
+        adds_deps: optional_dependency_specs(options),
+        schema: @schema,
         aliases: [
           y: :yes
         ],
-        defaults: [
-          with_ecto: false,
-          with_phoenix: false,
-          with_typescript: false,
-          camelize_props: false,
-          yes: false
-        ]
+        defaults: @defaults
       }
     end
 
@@ -78,11 +86,41 @@ if Code.ensure_loaded?(Igniter.Mix.Task) do
 
       igniter
       |> Igniter.Project.Formatter.import_dep(:nb_serializer)
+      |> ensure_optional_dependencies_available()
       |> print_welcome_message(skip_prompts)
-      |> maybe_add_optional_dependencies(with_ecto, with_phoenix, with_typescript)
       |> add_configuration(camelize_props, with_ecto, with_phoenix)
       |> create_example_serializer(with_ecto)
+      |> maybe_setup_nb_ts(with_typescript)
       |> print_next_steps(with_ecto, with_phoenix, with_typescript, camelize_props)
+    end
+
+    @doc false
+    def installer_options(argv) do
+      group = Igniter.Util.Info.group(%Igniter.Mix.Task.Info{group: @task_group}, task_name())
+
+      {options, _argv, _invalid} =
+        argv
+        |> Igniter.Util.Info.args_for_group(group)
+        |> OptionParser.parse(switches: @schema, aliases: [y: :yes])
+
+      Keyword.merge(@defaults, options)
+    end
+
+    @doc false
+    def composed_tasks(options) do
+      if options[:with_typescript], do: ["nb_ts.install"], else: []
+    end
+
+    @doc false
+    def optional_dependency_specs(options, installed_deps \\ installed_project_deps()) do
+      []
+      |> maybe_add_optional_dep(options[:with_ecto], installed_deps, {:ecto, "~> 3.10"})
+      |> maybe_add_optional_dep(options[:with_phoenix], installed_deps, {:plug, "~> 1.14"})
+      |> maybe_add_optional_dep(
+        options[:with_typescript],
+        installed_deps,
+        {:nb_ts, github: "nordbeam/nb_ts"}
+      )
     end
 
     defp print_welcome_message(igniter, skip_prompts) do
@@ -109,53 +147,32 @@ if Code.ensure_loaded?(Igniter.Mix.Task) do
       igniter
     end
 
-    defp maybe_add_optional_dependencies(igniter, with_ecto, with_phoenix, with_typescript) do
-      igniter
-      |> maybe_add_ecto(with_ecto)
-      |> maybe_add_phoenix(with_phoenix)
-      |> maybe_add_typescript(with_typescript)
-    end
+    defp ensure_optional_dependencies_available(igniter) do
+      missing_specs =
+        igniter.args.options
+        |> optional_dependency_specs()
+        |> Enum.reject(fn spec -> dep_present?(igniter, dep_name(spec)) end)
 
-    defp maybe_add_ecto(igniter, true) do
-      Igniter.Project.Deps.add_dep(igniter, {:ecto, "~> 3.10"})
-    end
-
-    defp maybe_add_ecto(igniter, _), do: igniter
-
-    defp maybe_add_phoenix(igniter, true) do
-      # Don't add phoenix dep - it should already be present in Phoenix apps
-      # Just add plug which might not be a direct dependency
-      igniter
-      |> Igniter.Project.Deps.add_dep({:plug, "~> 1.14"})
-    end
-
-    defp maybe_add_phoenix(igniter, _), do: igniter
-
-    defp maybe_add_typescript(igniter, true) do
-      yes? = igniter.args.options[:yes] || false
-
-      # Add nb_ts dependency if not already present
       igniter =
-        case Igniter.Project.Deps.get_dep(igniter, :nb_ts) do
-          {:ok, _} ->
-            igniter
+        Enum.reduce(missing_specs, igniter, fn spec, igniter ->
+          Igniter.Project.Deps.add_dep(igniter, spec)
+        end)
 
-          {:error, _} ->
-            Igniter.Project.Deps.add_dep(igniter, {:nb_ts, github: "nordbeam/nb_ts"})
-        end
-
-      # Fetch and compile nb_ts so its installer is available
-      igniter =
+      if requires_fetch_for_typescript?(igniter.args.options, missing_specs) do
         Igniter.apply_and_fetch_dependencies(igniter,
-          operation: "installing nb_ts",
-          yes: yes?
+          operation: "installing nb_serializer companion dependencies",
+          yes: igniter.args.options[:yes] || false
         )
-
-      # Now compose the nb_ts installer to set up TypeScript type generation
-      Igniter.compose_task(igniter, "nb_ts.install", ["--output-dir", "assets/js/types"])
+      else
+        igniter
+      end
     end
 
-    defp maybe_add_typescript(igniter, _), do: igniter
+    defp maybe_setup_nb_ts(igniter, true) do
+      compose_installer_task(igniter, "nb_ts.install", ["--output-dir", "assets/js/types"])
+    end
+
+    defp maybe_setup_nb_ts(igniter, _), do: igniter
 
     defp add_configuration(igniter, camelize_props, _with_ecto, _with_phoenix) do
       # Use Igniter's built-in config management to set camelize_props
@@ -181,17 +198,7 @@ if Code.ensure_loaded?(Igniter.Mix.Task) do
 
       serializer_content = build_example_serializer_content(module_name, with_ecto)
 
-      # Use Igniter's create_module to properly place the file with error handling
-      case Igniter.Project.Module.create_module(igniter, module_name, serializer_content) do
-        {:error, igniter} ->
-          Igniter.add_warning(
-            igniter,
-            "Could not create example serializer at #{inspect(module_name)}. You may need to manually create your first serializer."
-          )
-
-        result ->
-          result
-      end
+      Igniter.Project.Module.create_module(igniter, module_name, serializer_content)
     end
 
     defp build_example_serializer_content(module_name, with_ecto) do
@@ -461,6 +468,90 @@ if Code.ensure_loaded?(Igniter.Mix.Task) do
         end
 
       ecto_steps <> phoenix_steps <> typescript_steps
+    end
+
+    defp maybe_add_optional_dep(specs, true, installed_deps, spec) do
+      if dep_installed?(installed_deps, dep_name(spec)) do
+        specs
+      else
+        specs ++ [spec]
+      end
+    end
+
+    defp maybe_add_optional_dep(specs, _, _installed_deps, _spec), do: specs
+
+    defp installed_project_deps do
+      Mix.Project.config()
+      |> Keyword.get(:deps, [])
+      |> Enum.map(&dep_name/1)
+    end
+
+    defp dep_present?(igniter, dep) do
+      case Igniter.Project.Deps.get_dep(igniter, dep) do
+        {:ok, _} -> true
+        _ -> false
+      end
+    end
+
+    defp dep_installed?(installed_deps, dep), do: dep in installed_deps
+
+    defp dep_name({dep, _, _}) when is_atom(dep), do: dep
+    defp dep_name({dep, _}) when is_atom(dep), do: dep
+
+    defp requires_fetch_for_typescript?(options, missing_specs) do
+      options[:with_typescript] &&
+        Enum.any?(missing_specs, fn spec -> dep_name(spec) == :nb_ts end)
+    end
+
+    defp task_name do
+      Mix.Task.task_name(__MODULE__)
+    end
+
+    defp compose_installer_task(igniter, task, args) do
+      Igniter.compose_task(igniter, task, args ++ forwarded_global_argv(igniter.args.argv_flags))
+    end
+
+    @doc false
+    def forwarded_global_argv(argv_flags),
+      do: Enum.filter(argv_flags, &(&1 in @forwarded_child_flags))
+  end
+else
+  defmodule Mix.Tasks.NbSerializer.Install do
+    @shortdoc "Install `igniter` in order to install NbSerializer."
+
+    @moduledoc """
+    The task 'nb_serializer.install' requires igniter. Please install igniter and try again.
+
+    Add to your mix.exs for direct task usage:
+
+        {:igniter, "~> 0.7", only: [:dev, :test]}
+
+    Or install Igniter first and use the preferred installer flow:
+
+        mix igniter.install nb_serializer
+    """
+
+    use Mix.Task
+
+    def run(_argv) do
+      Mix.shell().error("""
+      The task 'nb_serializer.install' requires igniter. Please install igniter and try again.
+
+      Add to your mix.exs for direct task usage:
+
+          {:igniter, "~> 0.7", only: [:dev, :test]}
+
+      Or install Igniter first and use the preferred installer flow:
+
+          mix igniter.install nb_serializer
+
+      Then run:
+
+          mix deps.get
+          mix nb_serializer.install
+      """)
+
+      exit({:shutdown, 1})
     end
   end
 end

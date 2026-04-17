@@ -26,25 +26,25 @@ defmodule NbSerializer.Ecto do
     |> Map.delete(:__meta__)
   end
 
-  def prepare_data(%Ecto.Changeset{data: data}) do
-    prepare_data(data)
+  def prepare_data(data) do
+    if NbSerializer.Utils.ecto_changeset?(data) do
+      prepare_data(data.data)
+    else
+      data
+    end
   end
-
-  def prepare_data(data), do: data
 
   @doc """
   Checks if an association is loaded.
   """
-  def loaded?(%Ecto.Association.NotLoaded{}), do: false
-  def loaded?(_), do: true
+  def loaded?(data), do: not NbSerializer.Utils.ecto_not_loaded?(data)
 
   @doc """
   Helper to conditionally include associations based on whether they're loaded.
   """
   def if_loaded(data, field) do
-    case Map.get(data, field) do
-      %Ecto.Association.NotLoaded{} -> false
-      _ -> true
-    end
+    data
+    |> Map.get(field)
+    |> loaded?()
   end
 end

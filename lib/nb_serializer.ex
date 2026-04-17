@@ -498,12 +498,37 @@ defmodule NbSerializer do
         value -> value
       end
 
-    if should_camelize do
-      camelize_keys(serialized, 0)
+    result =
+      if should_camelize do
+        camelize_keys(serialized, 0)
+      else
+        serialized
+      end
+
+    # Strip {:raw, value} markers unless caller wants to keep them
+    # (e.g., nb_inertia needs them to avoid re-camelizing raw values)
+    if Keyword.get(opts, :keep_raw_markers, false) do
+      result
     else
-      serialized
+      strip_raw_markers(result)
     end
   end
+
+  defp strip_raw_markers({:raw, value}), do: value
+
+  defp strip_raw_markers(%_{} = data), do: data
+
+  defp strip_raw_markers(data) when is_map(data) do
+    Map.new(data, fn {key, value} -> {key, strip_raw_markers(value)} end)
+  end
+
+  defp strip_raw_markers(data) when is_list(data) do
+    Enum.map(data, &strip_raw_markers/1)
+  end
+
+  defp strip_raw_markers(data), do: data
+
+  defp camelize_keys({:raw, value}), do: value
 
   defp camelize_keys(data, depth) when is_map(data) and depth < @camelize_max_depth do
     data

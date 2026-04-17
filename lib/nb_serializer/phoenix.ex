@@ -157,7 +157,12 @@ defmodule NbSerializer.Phoenix do
   """
   @spec render_errors(changeset()) :: map()
   def render_errors(changeset) do
-    errors = Ecto.Changeset.traverse_errors(changeset, &translate_error/1)
+    unless function_exported?(Ecto.Changeset, :traverse_errors, 2) do
+      raise ArgumentError,
+            "NbSerializer.Phoenix.render_errors/1 requires the :ecto dependency to be available"
+    end
+
+    errors = apply(Ecto.Changeset, :traverse_errors, [changeset, &translate_error/1])
     %{errors: errors}
   end
 

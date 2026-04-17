@@ -23,7 +23,16 @@ A fast and declarative JSON serialization library for Elixir, inspired by Alba f
 
 ## Installation
 
-Add `nb_serializer` to your list of dependencies in `mix.exs`:
+Install with Igniter:
+
+```bash
+mix igniter.install nb_serializer
+
+# Optional integrations
+mix igniter.install nb_serializer --with-ecto --with-phoenix --with-typescript --camelize-props
+```
+
+Or add `nb_serializer` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do

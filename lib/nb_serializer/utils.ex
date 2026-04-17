@@ -70,9 +70,22 @@ defmodule NbSerializer.Utils do
   def handle_nil_or_empty(nil, :many), do: []
   def handle_nil_or_empty(nil, :one), do: nil
   def handle_nil_or_empty([], :many), do: []
-  def handle_nil_or_empty(%Ecto.Association.NotLoaded{}, :many), do: []
-  def handle_nil_or_empty(%Ecto.Association.NotLoaded{}, :one), do: nil
+
+  def handle_nil_or_empty(data, :many) do
+    if ecto_not_loaded?(data), do: [], else: data
+  end
+
+  def handle_nil_or_empty(data, :one) do
+    if ecto_not_loaded?(data), do: nil, else: data
+  end
+
   def handle_nil_or_empty(data, _cardinality), do: data
+
+  @doc false
+  def ecto_not_loaded?(data), do: is_struct(data, Ecto.Association.NotLoaded)
+
+  @doc false
+  def ecto_changeset?(data), do: is_struct(data, Ecto.Changeset)
 
   @doc """
   Formats error messages with field name interpolation.
