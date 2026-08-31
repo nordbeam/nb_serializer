@@ -73,4 +73,15 @@ defmodule Mix.Tasks.NbSerializer.InstallTest do
       assert files[path] == existing
     end
   end
+
+  test "hex package includes UsageRules documentation and prebuilt skill" do
+    package_files = NbSerializer.MixProject.project()[:package][:files]
+
+    assert "usage-rules.md" in package_files
+    assert "usage-rules" in package_files
+
+    assert File.exists?(Path.expand("../../../../usage-rules.md", __DIR__))
+    skill_path = Path.expand("../../../../usage-rules/skills/nb-serializer/SKILL.md", __DIR__)
+    assert File.exists?(skill_path)
+  end
 end

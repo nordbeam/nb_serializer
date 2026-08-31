@@ -42,6 +42,39 @@ def deps do
 end
 ```
 
+### Agent Skills with UsageRules
+
+NbSerializer ships a prebuilt agent skill in its Hex package. To sync it into
+an application's local `.agents/skills` directory, install
+[`usage_rules`](https://hexdocs.pm/usage_rules) and configure the package skill
+source in `mix.exs`:
+
+```bash
+mix igniter.install usage_rules
+```
+
+```elixir
+def project do
+  [
+    # ... existing project configuration ...
+    usage_rules: [
+      skills: [
+        location: ".agents/skills",
+        package_skills: [~r/^nb_/]
+      ]
+    ]
+  ]
+end
+```
+
+After adding `nb_serializer` to the application's dependencies, sync the skill:
+
+```bash
+mix usage_rules.sync
+```
+
+Use `package_skills: [:nb_serializer]` to sync only the NbSerializer skill.
+
 ## Quick Start
 
 > **Important**: All fields must have explicit type annotations. Typeless fields will cause a compile-time error. This ensures type safety and enables TypeScript generation.

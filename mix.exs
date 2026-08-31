@@ -65,7 +65,7 @@ defmodule NbSerializer.MixProject do
         "Documentation" => "https://hexdocs.pm/nb_serializer"
       },
       maintainers: ["assim"],
-      files: ~w(lib .formatter.exs mix.exs README* LICENSE* CHANGELOG*)
+      files: ~w(lib usage-rules .formatter.exs mix.exs README* LICENSE* CHANGELOG* usage-rules.md)
     ]
   end
 
