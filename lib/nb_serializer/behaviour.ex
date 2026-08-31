@@ -11,6 +11,8 @@ defmodule NbSerializer.Behaviour do
     * `__nb_serializer_fields__/0` - Returns the list of field definitions
     * `__nb_serializer_relationships__/0` - Returns the list of relationship definitions
     * `__nb_serializer_type_metadata__/0` - Returns type metadata for TypeScript generation
+    * `__nb_serializer_contract__/0` - Returns the normalized dependency-free contract IR
+    * `__nb_serializer_struct_module__/0` - Returns the associated struct module, when configured
     * `__nb_serializer_typescript_name__/0` - Returns custom TypeScript interface name if set
 
   ## Example
@@ -57,6 +59,17 @@ defmodule NbSerializer.Behaviour do
   @callback __nb_serializer_type_metadata__() :: %{atom() => map()}
 
   @doc """
+  Returns a normalized, dependency-free contract representation.
+
+  This callback is optional so serializers compiled by older versions remain
+  consumable by newer generators.
+  """
+  @callback __nb_serializer_contract__() :: map()
+
+  @doc "Returns the associated struct module, or nil when the serializer is not bound to one."
+  @callback __nb_serializer_struct_module__() :: module() | nil
+
+  @doc """
   Returns the custom TypeScript interface name if one was set.
 
   Returns `nil` if no custom name was configured.
@@ -67,6 +80,8 @@ defmodule NbSerializer.Behaviour do
     __nb_serializer_fields__: 0,
     __nb_serializer_relationships__: 0,
     __nb_serializer_type_metadata__: 0,
+    __nb_serializer_contract__: 0,
+    __nb_serializer_struct_module__: 0,
     __nb_serializer_typescript_name__: 0
   ]
 end

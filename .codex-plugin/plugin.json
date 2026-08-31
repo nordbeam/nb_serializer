@@ -1,0 +1,22 @@
+{
+  "name": "nb_serializer",
+  "version": "0.1.0",
+  "description": "Version-aware Codex guidance for nb_serializer DSLs, JSON output, metadata, performance, and integrations.",
+  "author": { "name": "Nordbeam", "url": "https://github.com/nordbeam" },
+  "homepage": "https://github.com/nordbeam/nb_serializer",
+  "repository": "https://github.com/nordbeam/nb_serializer",
+  "license": "MIT",
+  "keywords": ["elixir", "json", "serializer", "typescript"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "nb_serializer",
+    "shortDescription": "Build fast typed Elixir serializers",
+    "longDescription": "Install, configure, upgrade, diagnose, and verify nb_serializer DSLs, wire semantics, generated metadata, and optional framework integrations.",
+    "developerName": "Nordbeam",
+    "category": "Developer Tools",
+    "capabilities": ["Implement", "Configure", "Migrate", "Diagnose", "Verify"],
+    "websiteURL": "https://github.com/nordbeam/nb_serializer",
+    "brandColor": "#5E3AAE",
+    "defaultPrompt": ["Use $nb-serializer to implement or debug a typed serializer contract."]
+  }
+}

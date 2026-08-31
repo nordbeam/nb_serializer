@@ -12,12 +12,28 @@ defmodule NbSerializer.Compiler do
     typescript_name = Module.get_attribute(env.module, :typescript_name)
     typescript_namespace = Module.get_attribute(env.module, :typescript_namespace)
     snake_case_ts = Module.get_attribute(env.module, :nb_serializer_snake_case_ts)
+    struct_module = Module.get_attribute(env.module, :nb_serializer_struct_module)
 
     # Validate compute functions at compile time
     validate_compute_functions(env.module, fields, relationships)
 
     # Build type metadata from field definitions
     type_metadata = build_type_metadata(fields, relationships)
+
+    # Keep a dependency-free contract IR available to optional generators.
+    # This is escaped at compile time so introspection remains deterministic and
+    # does not need to re-run the serializer DSL at runtime.
+    contract =
+      NbSerializer.Contract.from_parts(
+        env.module,
+        fields,
+        relationships,
+        type_metadata,
+        name: serializer_typescript_name(env.module, typescript_name, typescript_namespace),
+        namespace: typescript_namespace,
+        snake_case: snake_case_ts || false,
+        struct_module: struct_module
+      )
 
     quote do
       @__nb_serializer_fields__ unquote(Macro.escape(fields))
@@ -47,9 +63,21 @@ defmodule NbSerializer.Compiler do
       def __nb_serializer_fields__, do: @__nb_serializer_fields__
       def __nb_serializer_relationships__, do: @__nb_serializer_relationships__
 
+      # Expose the struct associated with this serializer, when configured.
+      # Keeping this callback optional lets older hand-written serializers be
+      # consumed by the same contract boundary.
+      def __nb_serializer_struct_module__, do: unquote(struct_module)
+
       # Expose type metadata for typelizer
       def __nb_serializer_type_metadata__ do
         unquote(Macro.escape(type_metadata))
+      end
+
+      # Expose the normalized, dependency-free contract IR to nb_ts and other
+      # generators.  The callback is optional for backwards compatibility with
+      # hand-written serializers that only implement type metadata.
+      def __nb_serializer_contract__ do
+        unquote(Macro.escape(contract))
       end
 
       # Expose custom TypeScript name if provided
@@ -187,16 +215,49 @@ defmodule NbSerializer.Compiler do
     type = Keyword.get(opts, :type)
     typescript_validated = Keyword.get(opts, :typescript_validated, false)
 
+    # These modifiers describe the serialized wire shape, not merely the
+    # declared type.  Preserve them in metadata so generators do not claim a
+    # required/non-null value when the runtime can omit or null it.
+    optional =
+      Keyword.get(opts, :optional, false) or
+        Keyword.has_key?(opts, :if) or
+        Keyword.has_key?(opts, :unless) or
+        Keyword.get(opts, :on_error) == :skip
+
+    nullable = Keyword.get(opts, :nullable, false) or Keyword.get(opts, :on_error) == :null
+
     %{
       type: type,
       enum: Keyword.get(opts, :enum),
       list: Keyword.get(opts, :list, false),
-      nullable: Keyword.get(opts, :nullable, false),
-      optional: Keyword.get(opts, :optional, false),
+      nullable: nullable,
+      optional: optional,
       polymorphic: Keyword.get(opts, :polymorphic),
       typescript_validated: typescript_validated,
-      custom: Keyword.get(opts, :custom, false) || is_binary(type)
+      custom: Keyword.get(opts, :custom, false) || is_binary(type),
+      source: Keyword.get(opts, :from),
+      compute: Keyword.get(opts, :compute),
+      condition: Keyword.get(opts, :if) || Keyword.get(opts, :unless),
+      if: Keyword.get(opts, :if),
+      unless: Keyword.get(opts, :unless),
+      on_error: Keyword.get(opts, :on_error),
+      transform: Keyword.get(opts, :transform),
+      format: Keyword.get(opts, :format),
+      default: Keyword.get(opts, :default),
+      raw: Keyword.get(opts, :raw, false)
     }
+  end
+
+  defp serializer_typescript_name(module, custom_name, namespace) do
+    cond do
+      is_binary(custom_name) -> custom_name
+      is_binary(namespace) -> namespace <> default_serializer_name(module)
+      true -> default_serializer_name(module)
+    end
+  end
+
+  defp default_serializer_name(module) do
+    module |> Module.split() |> List.last() |> String.replace(~r/Serializer$/, "")
   end
 
   defp check_for_circular_references(module, relationships) do
@@ -552,10 +613,15 @@ defmodule NbSerializer.Compiler.Runtime do
   defp get_data_value(_data, _key), do: nil
 
   defp should_include?(data, opts, field_opts, module) do
-    if if_condition = field_opts[:if] do
-      evaluate_condition(if_condition, data, opts, module)
-    else
-      true
+    cond do
+      if_condition = field_opts[:if] ->
+        evaluate_condition(if_condition, data, opts, module)
+
+      unless_condition = field_opts[:unless] ->
+        not evaluate_condition(unless_condition, data, opts, module)
+
+      true ->
+        true
     end
   end
 
@@ -649,7 +715,7 @@ defmodule NbSerializer.Compiler.Runtime do
         current_depth = get_opt(opts, :_depth, 0)
         max_depth = get_opt(opts, :max_depth, nil) || 10
 
-        if max_depth && current_depth >= max_depth do
+        if current_depth >= max_depth do
           # At max depth, return appropriate empty value for associations to stop recursion
           case cardinality do
             :one -> nil
@@ -660,8 +726,7 @@ defmodule NbSerializer.Compiler.Runtime do
           # Prepare nested options with updated within and depth
           nested_opts = opts
 
-          nested_opts =
-            if max_depth, do: put_opt(nested_opts, :_depth, current_depth + 1), else: nested_opts
+          nested_opts = put_opt(nested_opts, :_depth, current_depth + 1)
 
           # Update options with nested within configuration
           nested_opts =
@@ -709,16 +774,11 @@ defmodule NbSerializer.Compiler.Runtime do
       current_depth = get_opt(opts, :_depth, 0)
       max_depth = get_opt(opts, :max_depth, nil) || 10
 
-      if !(max_depth && current_depth >= max_depth) do
+      if !(current_depth >= max_depth) do
         serializer = detect_polymorphic_serializer(data, polymorphic, opts, module)
 
         if serializer do
-          nested_opts =
-            if max_depth do
-              put_opt(opts, :_depth, current_depth + 1)
-            else
-              opts
-            end
+          nested_opts = put_opt(opts, :_depth, current_depth + 1)
 
           serializer.serialize(data, nested_opts)
         else

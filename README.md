@@ -116,6 +116,28 @@ field :config, type: ~TS"Record<string, any>"
 field :metadata, type: ~TS"{ enabled: boolean; count: number }"
 ```
 
+### Versioned Contract IR
+
+Every serializer compiled with `use NbSerializer.Serializer` exposes a
+dependency-free contract snapshot through `__nb_serializer_contract__/0` and
+`NbSerializer.Contract.build/1`. The map is versioned (`version: 1`) and
+contains normalized fields, relationships, TypeScript names/namespaces, and
+the options that affect the wire shape. This is the boundary consumed by
+optional generators such as `nb_ts`; it does not add a runtime dependency on
+`nb_ts`.
+
+Presence and nullability in the contract describe the serialized result:
+`if:` and `unless:` conditions, plus `on_error: :skip`, mark a field optional;
+`on_error: :null` marks it nullable. `from:`, `compute:`, `default:`,
+`transform:`, and `format:` are retained as semantic metadata so a generator
+can model the pipeline without changing serializer behavior. The runtime
+also evaluates `unless:` conditions as the inverse of `if:` conditions.
+
+The contract callback is optional in the behaviour for backwards compatibility
+with hand-written/older serializers. Consumers should fall back to
+`__nb_serializer_fields__/0`, `__nb_serializer_relationships__/0`, and
+`__nb_serializer_type_metadata__/0` when it is absent.
+
 ### Type Modifiers
 
 ```elixir

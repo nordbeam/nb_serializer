@@ -1,0 +1,4 @@
+interface:
+  display_name: "nb Serializer"
+  short_description: "Define fast typed JSON serializers in Elixir"
+  default_prompt: "Use $nb-serializer to implement or diagnose a version-aware JSON serializer."

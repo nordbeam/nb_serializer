@@ -15,12 +15,6 @@ defmodule NbSerializer.MixProject do
       homepage_url: "https://github.com/nordbeam/nb_serializer",
       name: "NbSerializer",
       test_coverage: [tool: ExCoveralls],
-      preferred_cli_env: [
-        coveralls: :test,
-        "coveralls.detail": :test,
-        "coveralls.post": :test,
-        "coveralls.html": :test
-      ],
       compilers: Mix.compilers(),
       aliases: aliases()
     ]
@@ -34,6 +28,17 @@ defmodule NbSerializer.MixProject do
     ]
   end
 
+  def cli do
+    [
+      preferred_envs: [
+        coveralls: :test,
+        "coveralls.detail": :test,
+        "coveralls.post": :test,
+        "coveralls.html": :test
+      ]
+    ]
+  end
+
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
@@ -43,9 +48,9 @@ defmodule NbSerializer.MixProject do
       {:plug, "~> 1.14", optional: true},
       {:telemetry, "~> 1.2"},
       {:nimble_options, "~> 1.1"},
-      {:igniter, "~> 0.7", optional: true},
+      {:igniter, "~> 0.8", optional: true},
       {:credo, "~> 1.7", optional: true, runtime: false},
-      {:ex_doc, "~> 0.31", only: :dev, runtime: false},
+      {:ex_doc, "~> 0.40", only: :dev, runtime: false},
       {:excoveralls, "~> 0.18", only: :test},
       {:benchee, "~> 1.3", only: :dev},
       {:stream_data, "~> 1.0", only: [:test, :dev]}

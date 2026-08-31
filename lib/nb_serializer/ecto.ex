@@ -8,12 +8,9 @@ defmodule NbSerializer.Ecto do
 
   defmacro __using__(_opts) do
     quote do
-      # Override the serialize_one function to handle Ecto-specific types
-      defp serialize_one(data, opts) do
-        data
-        |> NbSerializer.Ecto.prepare_data()
-        |> __nb_serializer_serialize__(opts)
-      end
+      # Normalize Ecto schemas and changesets before the compiled serializer runs.
+      def __nb_serializer_prepare_data__(data),
+        do: NbSerializer.Ecto.prepare_data(data)
     end
   end
 

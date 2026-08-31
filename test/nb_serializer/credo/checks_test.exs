@@ -2,7 +2,7 @@ defmodule NbSerializer.Credo.ChecksTest do
   use ExUnit.Case, async: false
 
   alias NbSerializer.Credo.Check.Warning.InvalidNestedSerializerType
-alias NbSerializer.Credo.Check.Warning.InconsistentNumericTypes
+  alias NbSerializer.Credo.Check.Warning.InconsistentNumericTypes
   alias NbSerializer.Credo.Check.Warning.DatetimeAsString
   alias NbSerializer.Credo.Check.Warning.MissingDatetimeFormat
   alias NbSerializer.Credo.Check.Warning.GenericMapType

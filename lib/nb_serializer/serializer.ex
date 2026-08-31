@@ -78,16 +78,17 @@ defmodule NbSerializer.Serializer do
       end
 
       def serialize(data, opts) do
-        serialize_one(data, opts)
+        data
+        |> __nb_serializer_prepare_data__()
+        |> __nb_serializer_serialize__(opts)
       end
 
       defoverridable serialize: 1, serialize: 2
 
-      defp serialize_one(nil, _opts), do: nil
+      # Integrations can normalize data before the compiled serializer runs.
+      def __nb_serializer_prepare_data__(data), do: data
 
-      defp serialize_one(data, opts) do
-        __nb_serializer_serialize__(data, opts)
-      end
+      defoverridable __nb_serializer_prepare_data__: 1
     end
   end
 
