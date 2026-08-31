@@ -1,5 +1,6 @@
 defmodule NbSerializer.EctoModuleTest do
   use ExUnit.Case
+  alias Ecto.Changeset
 
   # Mock Ecto schema for testing
   defmodule TestSchema do
@@ -47,7 +48,7 @@ defmodule NbSerializer.EctoModuleTest do
         __meta__: %Ecto.Schema.Metadata{state: :loaded, source: "test_schemas"}
       }
 
-      changeset = Ecto.Changeset.change(schema, %{name: "Updated"})
+      changeset = Changeset.change(schema, %{name: "Updated"})
       result = NbSerializer.Ecto.prepare_data(changeset)
 
       assert result[:id] == 1

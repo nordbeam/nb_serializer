@@ -262,6 +262,8 @@ defmodule NbSerializer.TestHelpers do
       # Other fields in json are ignored
   """
   @spec assert_serialized_structure(map() | list(), map() | list()) :: true
+  # The recursive assertion helper reports precise mismatches for maps and lists.
+  # credo:disable-for-next-line Credo.Check.Refactor.CyclomaticComplexity
   def assert_serialized_structure(serialized, expected)
       when is_map(serialized) and is_map(expected) do
     Enum.each(expected, fn {key, expected_value} ->
@@ -275,6 +277,8 @@ defmodule NbSerializer.TestHelpers do
           :error ->
             alternate_key = find_alternate_field_key(serialized, key)
 
+            # Keep the missing-key diagnostic close to the fallback lookup.
+            # credo:disable-for-next-line Credo.Check.Refactor.Nesting
             case alternate_key do
               nil ->
                 flunk("""

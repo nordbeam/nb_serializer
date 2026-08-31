@@ -64,46 +64,52 @@ defmodule NbSerializer.FormatterRegistry do
 
   # Private helpers
 
+  # Formatter selection supports configurable module/function arities.
+  # credo:disable-for-next-line Credo.Check.Refactor.CyclomaticComplexity
   defp apply_formatter_with_args(module, function, value, arg, format_key) do
     # Special handling for formatters with optional args
     # Use format_key if provided, otherwise use function name
     case {format_key || function, arg} do
       {:currency, nil} ->
-        apply(module, function, [value])
+        dispatch(module, function, [value])
 
       {:currency, []} ->
-        apply(module, function, [value])
+        dispatch(module, function, [value])
 
       {:currency, arg} when is_binary(arg) ->
-        apply(module, function, [value, arg])
+        dispatch(module, function, [value, arg])
 
       {:datetime, format} when is_binary(format) ->
         # For datetime formatter, we need to use the datetime function with format
         if function == :iso8601 do
           # If it's the iso8601 function being used for datetime, use Formatters.datetime instead
-          apply(NbSerializer.Formatters, :datetime, [value, format])
+          NbSerializer.Formatters.datetime(value, format)
         else
-          apply(module, function, [value, format])
+          dispatch(module, function, [value, format])
         end
 
       {:number, opts} when is_list(opts) or is_map(opts) ->
-        apply(module, function, [value, opts])
+        dispatch(module, function, [value, opts])
 
       {_, nil} ->
         # Most formatters just take a single value argument
-        apply(module, function, [value])
+        dispatch(module, function, [value])
 
       {_, []} ->
         # Empty list also means no arguments
-        apply(module, function, [value])
+        dispatch(module, function, [value])
 
       _ ->
         # Try with arg if function accepts 2 params
         if function_exported?(module, function, 2) do
-          apply(module, function, [value, arg])
+          dispatch(module, function, [value, arg])
         else
-          apply(module, function, [value])
+          dispatch(module, function, [value])
         end
     end
   end
+
+  # Formatter modules and arities are selected from the registry at runtime.
+  # credo:disable-for-next-line Credo.Check.Refactor.Apply
+  defp dispatch(module, function, args), do: apply(module, function, args)
 end

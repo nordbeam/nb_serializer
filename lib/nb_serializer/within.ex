@@ -104,7 +104,7 @@ defmodule NbSerializer.Within do
 
   # Private functions
 
-  defp normalize_path(path) when is_list(path) and length(path) > 0 do
+  defp normalize_path(path) when is_list(path) and path != [] do
     path
   end
 

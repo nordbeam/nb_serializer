@@ -79,19 +79,17 @@ defmodule NbSerializer.ErrorSerializer do
   """
   @spec serialize_changeset(changeset(), opts()) :: {:ok, serialized()} | {:error, term()}
   def serialize_changeset(changeset, opts \\ []) do
-    try do
-      details = extract_changeset_errors(changeset)
+    details = extract_changeset_errors(changeset)
 
-      error_data = %{
-        error: "Validation Failed",
-        message: opts[:message] || "The provided data is invalid",
-        details: details
-      }
+    error_data = %{
+      error: "Validation Failed",
+      message: opts[:message] || "The provided data is invalid",
+      details: details
+    }
 
-      {:ok, serialize(error_data, opts)}
-    rescue
-      e -> {:error, e}
-    end
+    {:ok, serialize(error_data, opts)}
+  rescue
+    e -> {:error, e}
   end
 
   @doc """
@@ -112,12 +110,10 @@ defmodule NbSerializer.ErrorSerializer do
   """
   @spec to_json(error_data(), opts()) :: {:ok, json_string()} | {:error, term()}
   def to_json(error, opts \\ []) do
-    try do
-      serialized = __MODULE__.serialize(error, opts)
-      {:ok, NbSerializer.encoder().encode!(serialized)}
-    rescue
-      e -> {:error, e}
-    end
+    serialized = __MODULE__.serialize(error, opts)
+    {:ok, NbSerializer.encoder().encode!(serialized)}
+  rescue
+    e -> {:error, e}
   end
 
   @doc """
@@ -164,9 +160,11 @@ defmodule NbSerializer.ErrorSerializer do
   defp extract_nested_errors(changes) when is_map(changes) do
     Enum.reduce(changes, %{}, fn {field, value}, acc ->
       case value do
-        %{errors: errors} when is_list(errors) and length(errors) > 0 ->
+        %{errors: errors} when is_list(errors) and errors != [] ->
           nested = format_errors(errors)
           # Prefix nested field names
+          # Nested changeset errors retain their field path while being flattened.
+          # credo:disable-for-lines:5 Credo.Check.Refactor.Nesting
           prefixed =
             Map.new(nested, fn {k, v} ->
               {:"#{field}.#{k}", v}

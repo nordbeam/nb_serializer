@@ -410,10 +410,12 @@ if Code.ensure_loaded?(Igniter) do
 
       items
       |> Enum.reject(&is_nil/1)
-      |> Enum.map(&("    " <> &1))
-      |> Enum.join("\n")
+      |> Enum.map_join("\n", &("    " <> &1))
     end
 
+    # This function renders the combinatorial installer guidance for each
+    # optional integration, so its branching is intentionally kept together.
+    # credo:disable-for-next-line Credo.Check.Refactor.CyclomaticComplexity
     defp format_integration_steps(with_ecto, with_phoenix, with_typescript) do
       ecto_steps =
         if with_ecto do

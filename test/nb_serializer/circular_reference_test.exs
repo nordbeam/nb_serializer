@@ -359,7 +359,7 @@ defmodule NbSerializer.CircularReferenceTest do
         )
 
         def has_books?(author, _opts) do
-          length(author.books) > 0
+          author.books != []
         end
       end
 

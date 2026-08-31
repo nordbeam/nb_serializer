@@ -206,11 +206,9 @@ defmodule NbSerializer do
   """
   @spec encode(serialized()) :: {:ok, json_string()} | {:error, term()}
   def encode(data) do
-    try do
-      {:ok, encoder().encode!(data)}
-    rescue
-      e -> {:error, e}
-    end
+    {:ok, encoder().encode!(data)}
+  rescue
+    e -> {:error, e}
   end
 
   @doc """

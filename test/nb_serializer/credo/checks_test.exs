@@ -1,14 +1,15 @@
 defmodule NbSerializer.Credo.ChecksTest do
   use ExUnit.Case, async: false
 
-  alias NbSerializer.Credo.Check.Warning.InvalidNestedSerializerType
-  alias NbSerializer.Credo.Check.Warning.InconsistentNumericTypes
-  alias NbSerializer.Credo.Check.Warning.DatetimeAsString
-  alias NbSerializer.Credo.Check.Warning.MissingDatetimeFormat
-  alias NbSerializer.Credo.Check.Warning.GenericMapType
-  alias NbSerializer.Credo.Check.Readability.MissingModuledoc
+  alias Credo.SourceFile
   alias NbSerializer.Credo.Check.Design.LargeSchema
   alias NbSerializer.Credo.Check.Design.SimpleFieldCompute
+  alias NbSerializer.Credo.Check.Readability.MissingModuledoc
+  alias NbSerializer.Credo.Check.Warning.DatetimeAsString
+  alias NbSerializer.Credo.Check.Warning.GenericMapType
+  alias NbSerializer.Credo.Check.Warning.InconsistentNumericTypes
+  alias NbSerializer.Credo.Check.Warning.InvalidNestedSerializerType
+  alias NbSerializer.Credo.Check.Warning.MissingDatetimeFormat
 
   # Start Credo services before running tests
   setup_all do
@@ -489,6 +490,6 @@ defmodule NbSerializer.Credo.ChecksTest do
   end
 
   defp source_to_source_file(source_code) do
-    Credo.SourceFile.parse(source_code, "test.ex")
+    SourceFile.parse(source_code, "test.ex")
   end
 end

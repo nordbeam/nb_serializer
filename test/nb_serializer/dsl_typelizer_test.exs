@@ -132,6 +132,8 @@ defmodule NbSerializer.DSLTypelizerTest do
       end
 
       def format_name(data, _opts), do: data.name
+      # Keep the legacy callback name covered by this backwards-compatibility test.
+      # credo:disable-for-next-line Credo.Check.Readability.PredicateFunctionNames
       def is_admin(data, _opts), do: data.admin
     end
 

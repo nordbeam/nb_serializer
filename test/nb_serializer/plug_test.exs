@@ -252,6 +252,6 @@ defmodule NbSerializer.PlugTest do
   end
 
   defp build_conn do
-    Plug.Test.conn(:get, "/")
+    conn(:get, "/")
   end
 end

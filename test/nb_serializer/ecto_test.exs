@@ -1,5 +1,6 @@
 defmodule NbSerializer.EctoTest do
   use ExUnit.Case
+  alias Ecto.Changeset
 
   # Mock Ecto schemas for testing
   defmodule User do
@@ -269,7 +270,7 @@ defmodule NbSerializer.EctoTest do
       end
 
       user = %User{id: 1, name: "Test User", email: "test@example.com"}
-      changeset = Ecto.Changeset.change(user, %{name: "Updated Name"})
+      changeset = Changeset.change(user, %{name: "Updated Name"})
 
       # Should serialize the data from the changeset
       {:ok, result} = NbSerializer.serialize(ChangesetSerializer, changeset.data)

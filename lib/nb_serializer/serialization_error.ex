@@ -20,6 +20,8 @@ defmodule NbSerializer.SerializationError do
     message
   end
 
+  # Error messages intentionally cover each supported error shape explicitly.
+  # credo:disable-for-next-line Credo.Check.Refactor.CyclomaticComplexity
   def message(%__MODULE__{field: field, original_error: original}) do
     cond do
       field && original && is_exception(original) ->

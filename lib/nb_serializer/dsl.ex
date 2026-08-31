@@ -267,6 +267,8 @@ defmodule NbSerializer.DSL do
   end
 
   # Handle shorthand: field :name, :string (fixed guard issue)
+  # This macro validates shorthand, custom, and TypeScript field forms.
+  # credo:disable-for-next-line Credo.Check.Refactor.CyclomaticComplexity
   defmacro field(name, type_or_opts) when is_atom(name) do
     quote do
       opts =
@@ -314,6 +316,7 @@ defmodule NbSerializer.DSL do
                  :any
                ] do
               # Auto-format datetime/date to ISO 8601 by default
+              # credo:disable-for-lines:4 Credo.Check.Refactor.Nesting
               type_opts =
                 if atom in [:datetime, :date] do
                   Keyword.put(type_opts, :format, :iso8601)
@@ -373,6 +376,8 @@ defmodule NbSerializer.DSL do
       if function_exported?(struct_module, :__struct__, 0) do
         struct_fields = struct_module.__struct__() |> Map.keys()
 
+        # Keep the warning next to the struct-field validation that causes it.
+        # credo:disable-for-next-line Credo.Check.Refactor.Nesting
         if from_field not in struct_fields do
           IO.warn(
             """

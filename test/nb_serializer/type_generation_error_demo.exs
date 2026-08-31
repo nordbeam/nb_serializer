@@ -47,7 +47,7 @@ defmodule NbSerializer.TypeGenerationErrorDemoTest do
       assert error.message =~ "Map<String$Key>"
       assert error.message =~ "Valid characters:"
       assert error.field == :data
-      assert length(error.suggestions) > 0
+      assert error.suggestions != []
     end
 
     test "common typos get helpful suggestions" do

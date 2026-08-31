@@ -41,12 +41,10 @@ defmodule NbSerializer.Utils do
 
   defp safe_alternate_key_access(data, key) when is_binary(key) do
     # Try to find existing atom without creating new ones
-    try do
-      atom = String.to_existing_atom(key)
-      Map.get(data, atom)
-    rescue
-      ArgumentError -> nil
-    end
+    atom = String.to_existing_atom(key)
+    Map.get(data, atom)
+  rescue
+    ArgumentError -> nil
   end
 
   @doc """

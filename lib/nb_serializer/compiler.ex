@@ -3,6 +3,8 @@ defmodule NbSerializer.Compiler do
   Compiles the serializer DSL into an efficient serialization function.
   """
 
+  # This macro coordinates all compile-time serializer metadata and callbacks.
+  # credo:disable-for-next-line Credo.Check.Refactor.CyclomaticComplexity
   defmacro __before_compile__(env) do
     fields = Module.get_attribute(env.module, :nb_serializer_fields) |> Enum.reverse()
 
@@ -98,6 +100,8 @@ defmodule NbSerializer.Compiler do
       # Generate TypeScript interface (moved to nb_ts library)
       def __nb_serializer_typescript_interface__ do
         if Code.ensure_loaded?(NbTs.Interface) do
+          # nb_ts is optional and loaded dynamically when present.
+          # credo:disable-for-next-line Credo.Check.Refactor.Apply
           apply(NbTs.Interface, :build, [__MODULE__])
         end
       end
@@ -106,6 +110,8 @@ defmodule NbSerializer.Compiler do
       def __nb_serializer_ensure_registered__ do
         if Code.ensure_loaded?(NbTs.Registry) and
              Process.whereis(NbTs.Registry) do
+          # nb_ts is optional and loaded dynamically when present.
+          # credo:disable-for-next-line Credo.Check.Refactor.Apply
           apply(NbTs.Registry, :register, [__MODULE__])
         end
 
@@ -154,6 +160,8 @@ defmodule NbSerializer.Compiler do
         has_function = Module.defines?(module, {compute, 2})
         has_error_handler = opts[:on_error] != nil
 
+        # Keep the compile-time validation failure path close to its checks.
+        # credo:disable-for-next-line Credo.Check.Refactor.Nesting
         if not has_function and not has_error_handler do
           raise NbSerializer.CompileError,
             module: module,
@@ -336,6 +344,8 @@ defmodule NbSerializer.Compiler.Runtime do
     |> Enum.reduce(%{}, fn {field_name, field_opts}, acc ->
       case safe_get_field_value(data, field_name, field_opts, opts, module) do
         {:ok, value} ->
+          # Raw fields must be marked before they are inserted into the result.
+          # credo:disable-for-next-line Credo.Check.Refactor.Nesting
           value = if field_opts[:raw], do: {:raw, value}, else: value
           Map.put(acc, field_name, value)
 
@@ -566,6 +576,9 @@ defmodule NbSerializer.Compiler.Runtime do
     end
   end
 
+  # Association handling covers the supported missing-data policies in one
+  # dispatch point so each policy has identical serializer semantics.
+  # credo:disable-for-next-line Credo.Check.Refactor.CyclomaticComplexity
   defp handle_missing_association(
          data,
          serializer,
@@ -649,6 +662,8 @@ defmodule NbSerializer.Compiler.Runtime do
       case Keyword.get(within, field_name) do
         # Field not in within, check if it's present as a plain atom
         nil ->
+          # The fallback accepts both keyword and plain-atom paths.
+          # credo:disable-for-next-line Credo.Check.Refactor.Nesting
           if field_name in within do
             # Field found as atom, serialize without nested
             {true, []}
@@ -695,6 +710,8 @@ defmodule NbSerializer.Compiler.Runtime do
     end
   end
 
+  # This hot path handles Ecto loading, depth, within filters, and cardinality.
+  # credo:disable-for-next-line Credo.Check.Refactor.CyclomaticComplexity
   defp serialize_association(data, serializer, opts, cardinality, field_name)
        when not is_nil(serializer) do
     if Utils.ecto_not_loaded?(data) do
@@ -744,6 +761,8 @@ defmodule NbSerializer.Compiler.Runtime do
               []
 
             data ->
+              # Cardinality determines whether to recurse once or over a list.
+              # credo:disable-for-next-line Credo.Check.Refactor.Nesting
               case cardinality do
                 :one -> serializer.serialize(data, nested_opts)
                 :many when is_list(data) -> Enum.map(data, &serializer.serialize(&1, nested_opts))
@@ -777,6 +796,8 @@ defmodule NbSerializer.Compiler.Runtime do
       if !(current_depth >= max_depth) do
         serializer = detect_polymorphic_serializer(data, polymorphic, opts, module)
 
+        # A polymorphic value may require one more serializer-selection branch.
+        # credo:disable-for-next-line Credo.Check.Refactor.Nesting
         if serializer do
           nested_opts = put_opt(opts, :_depth, current_depth + 1)
 

@@ -162,6 +162,8 @@ defmodule NbSerializer.Phoenix do
             "NbSerializer.Phoenix.render_errors/1 requires the :ecto dependency to be available"
     end
 
+    # Ecto is optional and this integration is intentionally resolved at runtime.
+    # credo:disable-for-next-line Credo.Check.Refactor.Apply
     errors = apply(Ecto.Changeset, :traverse_errors, [changeset, &translate_error/1])
     %{errors: errors}
   end

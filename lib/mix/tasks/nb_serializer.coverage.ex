@@ -80,6 +80,8 @@ defmodule Mix.Tasks.NbSerializer.Coverage do
     # First try the registry if it's running (moved to nb_ts library)
     registered =
       if Process.whereis(NbTs.Registry) do
+        # The optional nb_ts registry is resolved at runtime.
+        # credo:disable-for-next-line Credo.Check.Refactor.Apply
         apply(NbTs.Registry, :all_serializers, [])
       else
         []
