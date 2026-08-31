@@ -2,6 +2,7 @@ defmodule Mix.Tasks.NbSerializer.InstallTest do
   use ExUnit.Case, async: true
 
   alias Mix.Tasks.NbSerializer.Install
+  import Igniter.Test, only: [apply_igniter!: 1, test_project: 1]
 
   describe "info/2" do
     test "declares the companion installer for requested TypeScript support" do
@@ -49,6 +50,27 @@ defmodule Mix.Tasks.NbSerializer.InstallTest do
                "dev",
                "--with-typescript"
              ]) == ["--yes"]
+    end
+  end
+
+  describe "example serializer generation" do
+    test "preserves an existing example serializer on interrupted installer reruns" do
+      path = "lib/sample/serializers/example_serializer.ex"
+
+      existing = """
+      defmodule Sample.Serializers.ExampleSerializer do
+        use NbSerializer.Serializer
+        field(:custom, :string)
+      end
+      """
+
+      files =
+        test_project(app_name: :sample, files: %{path => existing})
+        |> Install.create_example_serializer(false)
+        |> apply_igniter!()
+        |> then(& &1.assigns.test_files)
+
+      assert files[path] == existing
     end
   end
 end

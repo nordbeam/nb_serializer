@@ -185,7 +185,8 @@ if Code.ensure_loaded?(Igniter) do
       )
     end
 
-    defp create_example_serializer(igniter, with_ecto) do
+    @doc false
+    def create_example_serializer(igniter, with_ecto) do
       app_name = Igniter.Project.Application.app_name(igniter)
 
       # Build the module name: MyApp.Serializers.ExampleSerializer
@@ -198,7 +199,13 @@ if Code.ensure_loaded?(Igniter) do
 
       serializer_content = build_example_serializer_content(module_name, with_ecto)
 
-      Igniter.Project.Module.create_module(igniter, module_name, serializer_content)
+      case Igniter.Project.Module.module_exists(igniter, module_name) do
+        {true, igniter} ->
+          igniter
+
+        {false, igniter} ->
+          Igniter.Project.Module.create_module(igniter, module_name, serializer_content)
+      end
     end
 
     defp build_example_serializer_content(module_name, with_ecto) do
