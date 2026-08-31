@@ -54,6 +54,12 @@ jobs:
       run: mix credo --strict
       if: matrix.elixir == '1.20' && matrix.otp == '29'
 
+    - name: Smoke benchmark scripts
+      if: matrix.elixir == '1.20' && matrix.otp == '29'
+      run: |
+        NB_BENCH_SMOKE=1 mix run bench/quick_bench.exs
+        NB_BENCH_SMOKE=1 mix run bench/serialization_bench.exs
+
   coverage:
     name: Code Coverage
     runs-on: ubuntu-latest

@@ -1,14 +1,22 @@
 # Quick performance benchmark for NbSerializer
 # Run with: mix run bench/quick_bench.exs
+# Fast compile/runtime smoke: NB_BENCH_SMOKE=1 mix run bench/quick_bench.exs
+
+benchmark_options =
+  if System.get_env("NB_BENCH_SMOKE") in ["1", "true"] do
+    [time: 0.05, warmup: 0.01]
+  else
+    [time: 2, warmup: 1]
+  end
 
 defmodule QuickBench do
   defmodule SimpleSerializer do
     use NbSerializer.Serializer
 
     schema do
-      field(:id)
-      field(:name)
-      field(:email)
+      field(:id, :number)
+      field(:name, :string)
+      field(:email, :string)
     end
   end
 
@@ -16,9 +24,9 @@ defmodule QuickBench do
     use NbSerializer.Serializer
 
     schema do
-      field(:id)
-      field(:name)
-      field(:display_name, compute: :upcase_name)
+      field(:id, :number)
+      field(:name, :string)
+      field(:display_name, :string, compute: :upcase_name)
     end
 
     def upcase_name(user, _opts) do
@@ -62,13 +70,13 @@ IO.puts("\n=== SINGLE OBJECT SERIALIZATION ===\n")
 
 Benchee.run(
   %{
-    "NbSerializer" => fn -> NbSerializer.serialize(QuickBench.SimpleSerializer, QuickBench.test_data()) end,
+    "NbSerializer" => fn ->
+      NbSerializer.serialize!(QuickBench.SimpleSerializer, QuickBench.test_data())
+    end,
     "Manual" => fn -> QuickBench.manual_serialize(QuickBench.test_data()) end,
     "Map.take" => fn -> Map.take(QuickBench.test_data(), [:id, :name, :email]) end
   },
-  time: 2,
-  warmup: 1,
-  print: [fast_warning: false]
+  Keyword.put(benchmark_options, :print, fast_warning: false)
 )
 
 # Collection benchmarks
@@ -79,14 +87,13 @@ users_100 = QuickBench.users_list(100)
 Benchee.run(
   %{
     "NbSerializer - 100 items" => fn ->
-      NbSerializer.serialize(QuickBench.SimpleSerializer, users_100)
+      NbSerializer.serialize!(QuickBench.SimpleSerializer, users_100)
     end,
     "Manual - 100 items" => fn ->
       Enum.map(users_100, &QuickBench.manual_serialize/1)
     end
   },
-  time: 2,
-  warmup: 1
+  benchmark_options
 )
 
 # Computed fields benchmark
@@ -95,7 +102,7 @@ IO.puts("\n=== COMPUTED FIELDS ===\n")
 Benchee.run(
   %{
     "NbSerializer - Computed" => fn ->
-      NbSerializer.serialize(QuickBench.ComputedSerializer, QuickBench.test_data())
+      NbSerializer.serialize!(QuickBench.ComputedSerializer, QuickBench.test_data())
     end,
     "Manual - Computed" => fn ->
       user = QuickBench.test_data()
@@ -107,8 +114,7 @@ Benchee.run(
       }
     end
   },
-  time: 2,
-  warmup: 1
+  benchmark_options
 )
 
 # JSON encoding benchmark
@@ -116,8 +122,8 @@ IO.puts("\n=== JSON ENCODING ===\n")
 
 Benchee.run(
   %{
-    "NbSerializer.serialize!" => fn ->
-      NbSerializer.serialize!(QuickBench.SimpleSerializer, QuickBench.test_data())
+    "NbSerializer.to_json!" => fn ->
+      NbSerializer.to_json!(QuickBench.SimpleSerializer, QuickBench.test_data())
     end,
     "Manual + Jason" => fn ->
       QuickBench.test_data()
@@ -125,8 +131,7 @@ Benchee.run(
       |> Jason.encode!()
     end
   },
-  time: 2,
-  warmup: 1
+  benchmark_options
 )
 
 IO.puts("\n=== PERFORMANCE SUMMARY ===")

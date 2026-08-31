@@ -1,4 +1,12 @@
 # Run with: mix run bench/serialization_bench.exs
+# Fast compile/runtime smoke: NB_BENCH_SMOKE=1 mix run bench/serialization_bench.exs
+
+benchmark_options =
+  if System.get_env("NB_BENCH_SMOKE") in ["1", "true"] do
+    [time: 0.05, warmup: 0.01, memory_time: 0]
+  else
+    [time: 5, warmup: 2, memory_time: 2]
+  end
 
 # Setup test data and serializers
 defmodule BenchData do
@@ -75,9 +83,9 @@ defmodule SimpleUserSerializer do
   use NbSerializer.Serializer
 
   schema do
-    field(:id)
-    field(:name)
-    field(:email)
+    field(:id, :number)
+    field(:name, :string)
+    field(:email, :string)
   end
 end
 
@@ -85,11 +93,11 @@ defmodule UserWithComputedSerializer do
   use NbSerializer.Serializer
 
   schema do
-    field(:id)
-    field(:name)
-    field(:email)
-    field(:display_name, compute: :format_display_name)
-    field(:account_age, compute: :calculate_age)
+    field(:id, :number)
+    field(:name, :string)
+    field(:email, :string)
+    field(:display_name, :string, compute: :format_display_name)
+    field(:account_age, :string, compute: :calculate_age)
   end
 
   def format_display_name(user, _opts) do
@@ -106,25 +114,25 @@ defmodule ConditionalUserSerializer do
   use NbSerializer.Serializer
 
   schema do
-    field(:id)
-    field(:name)
-    field(:email, if: :show_email?)
-    field(:age, if: :show_private?)
-    field(:active, unless: :hide_status?)
+    field(:id, :number)
+    field(:name, :string)
+    field(:email, :string, if: :show_email?)
+    field(:age, :number, if: :show_private?)
+    field(:active, :boolean, unless: :hide_status?)
   end
 
   def show_email?(_user, opts), do: opts[:show_email]
   def show_private?(_user, opts), do: opts[:admin]
-  def hide_status?(_user, opts), do: opts[:minimal]
+  def hide_status?(_user, opts), do: Keyword.get(opts, :minimal, false)
 end
 
 defmodule CommentSerializer do
   use NbSerializer.Serializer
 
   schema do
-    field(:id)
-    field(:body)
-    field(:author)
+    field(:id, :number)
+    field(:body, :string)
+    field(:author, :string)
   end
 end
 
@@ -132,9 +140,9 @@ defmodule PostSerializer do
   use NbSerializer.Serializer
 
   schema do
-    field(:id)
-    field(:title)
-    field(:body)
+    field(:id, :number)
+    field(:title, :string)
+    field(:body, :string)
     has_many(:comments, serializer: CommentSerializer)
   end
 end
@@ -143,9 +151,9 @@ defmodule UserWithPostsSerializer do
   use NbSerializer.Serializer
 
   schema do
-    field(:id)
-    field(:name)
-    field(:email)
+    field(:id, :number)
+    field(:name, :string)
+    field(:email, :string)
     has_many(:posts, serializer: PostSerializer)
   end
 end
@@ -155,9 +163,9 @@ defmodule EctoUserSerializer do
   use NbSerializer.Ecto
 
   schema do
-    field(:id)
-    field(:name)
-    field(:email)
+    field(:id, :number)
+    field(:name, :string)
+    field(:email, :string)
   end
 end
 
@@ -190,7 +198,7 @@ end
 Benchee.run(
   %{
     "NbSerializer - Simple" => fn input ->
-      NbSerializer.serialize(SimpleUserSerializer, input)
+      NbSerializer.serialize!(SimpleUserSerializer, input)
     end,
     "Manual - Simple" => fn input ->
       ManualSerializer.simple_user(input)
@@ -199,39 +207,33 @@ Benchee.run(
       Map.take(input, [:id, :name, :email])
     end
   },
-  inputs: %{
+  Keyword.put(benchmark_options, :inputs, %{
     "Single User" => BenchData.simple_user()
-  },
-  time: 5,
-  memory_time: 2,
-  warmup: 2
+  })
 )
 
 Benchee.run(
   %{
     "NbSerializer - Computed Fields" => fn input ->
-      NbSerializer.serialize(UserWithComputedSerializer, input)
+      NbSerializer.serialize!(UserWithComputedSerializer, input)
     end,
     "Manual - Computed Fields" => fn input ->
       ManualSerializer.user_with_computed(input)
     end
   },
-  inputs: %{
+  Keyword.put(benchmark_options, :inputs, %{
     "User with Timestamps" =>
       Map.put(BenchData.simple_user(), :created_at, ~U[2024-01-01 00:00:00Z])
-  },
-  time: 5,
-  memory_time: 2,
-  warmup: 2
+  })
 )
 
 Benchee.run(
   %{
     "NbSerializer - Conditional (all fields)" => fn input ->
-      NbSerializer.serialize(ConditionalUserSerializer, input, show_email: true, admin: true)
+      NbSerializer.serialize!(ConditionalUserSerializer, input, show_email: true, admin: true)
     end,
     "NbSerializer - Conditional (minimal)" => fn input ->
-      NbSerializer.serialize(ConditionalUserSerializer, input, minimal: true)
+      NbSerializer.serialize!(ConditionalUserSerializer, input, minimal: true)
     end,
     "Manual - Conditional check" => fn input ->
       result = %{id: input.id, name: input.name}
@@ -240,18 +242,15 @@ Benchee.run(
       result
     end
   },
-  inputs: %{
+  Keyword.put(benchmark_options, :inputs, %{
     "User" => BenchData.simple_user()
-  },
-  time: 5,
-  memory_time: 2,
-  warmup: 2
+  })
 )
 
 Benchee.run(
   %{
     "NbSerializer - Nested Relationships" => fn input ->
-      NbSerializer.serialize(UserWithPostsSerializer, input)
+      NbSerializer.serialize!(UserWithPostsSerializer, input)
     end,
     "Manual - Nested" => fn input ->
       %{
@@ -273,85 +272,70 @@ Benchee.run(
       }
     end
   },
-  inputs: %{
+  Keyword.put(benchmark_options, :inputs, %{
     "User with 2 posts" => BenchData.user_with_posts()
-  },
-  time: 5,
-  memory_time: 2,
-  warmup: 2
+  })
 )
 
 # Benchmark collection serialization
 Benchee.run(
   %{
     "NbSerializer - 10 users" => fn input ->
-      NbSerializer.serialize(SimpleUserSerializer, input)
+      NbSerializer.serialize!(SimpleUserSerializer, input)
     end,
     "Manual - 10 users" => fn input ->
       ManualSerializer.users_list(input)
     end
   },
-  inputs: %{
+  Keyword.put(benchmark_options, :inputs, %{
     "10 Users" => BenchData.users_list(10)
-  },
-  time: 5,
-  memory_time: 2,
-  warmup: 2
+  })
 )
 
 Benchee.run(
   %{
     "NbSerializer - 100 users" => fn input ->
-      NbSerializer.serialize(SimpleUserSerializer, input)
+      NbSerializer.serialize!(SimpleUserSerializer, input)
     end,
     "Manual - 100 users" => fn input ->
       ManualSerializer.users_list(input)
     end
   },
-  inputs: %{
+  Keyword.put(benchmark_options, :inputs, %{
     "100 Users" => BenchData.users_list(100)
-  },
-  time: 5,
-  memory_time: 2,
-  warmup: 2
+  })
 )
 
 Benchee.run(
   %{
     "NbSerializer - 1000 users" => fn input ->
-      NbSerializer.serialize(SimpleUserSerializer, input)
+      NbSerializer.serialize!(SimpleUserSerializer, input)
     end,
     "Manual - 1000 users" => fn input ->
       ManualSerializer.users_list(input)
     end
   },
-  inputs: %{
+  Keyword.put(benchmark_options, :inputs, %{
     "1000 Users" => BenchData.users_list(1000)
-  },
-  time: 5,
-  memory_time: 2,
-  warmup: 2
+  })
 )
 
 # JSON encoding benchmark
 Benchee.run(
   %{
-    "NbSerializer.serialize! (with JSON)" => fn input ->
-      NbSerializer.serialize!(SimpleUserSerializer, input)
+    "NbSerializer.to_json!" => fn input ->
+      NbSerializer.to_json!(SimpleUserSerializer, input)
     end,
     "NbSerializer + Jason.encode!" => fn input ->
-      input |> NbSerializer.serialize(SimpleUserSerializer) |> Jason.encode!()
+      input |> then(&NbSerializer.serialize!(SimpleUserSerializer, &1)) |> Jason.encode!()
     end,
     "Manual + Jason.encode!" => fn input ->
       input |> ManualSerializer.simple_user() |> Jason.encode!()
     end
   },
-  inputs: %{
+  Keyword.put(benchmark_options, :inputs, %{
     "User" => BenchData.simple_user()
-  },
-  time: 5,
-  memory_time: 2,
-  warmup: 2
+  })
 )
 
 IO.puts("\n\n=== Benchmark Summary ===")

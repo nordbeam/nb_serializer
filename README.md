@@ -895,6 +895,10 @@ mix coveralls
 # Run benchmarks
 mix run bench/serialization_bench.exs
 mix run bench/quick_bench.exs
+
+# Fast benchmark-script smoke used by CI
+NB_BENCH_SMOKE=1 mix run bench/quick_bench.exs
+NB_BENCH_SMOKE=1 mix run bench/serialization_bench.exs
 ```
 
 ## Development
