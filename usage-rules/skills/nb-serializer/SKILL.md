@@ -24,6 +24,15 @@ Use this skill for `nb_serializer` schemas, nested relationships, computed/condi
 - Use auto-registration/inferred serialization, `NbSerializer.Phoenix`, Ecto handling, Plug middleware, `within` relationship controls, streams, protocols, parallel relationship loading, and telemetry only when the installed release exports those modules/functions. Prefer explicit serializer calls at integration boundaries.
 - Never hide a data-shape error with `:any`; model the contract accurately and choose documented error behavior (`null`, default, skip, or re-raise) deliberately.
 
+## Route companion integrations
+
+- When the task includes NbInertia controller/page declarations, rendering, shared/lazy/deferred props, or runtime prop materialization, read and use the `nb-inertia` skill. Preserve its explicit `{Serializer, value}` boundary; it is not the `{:ok, serialized}` result returned by `NbSerializer.serialize/2`.
+- When the task includes NbTs discovery, generated TypeScript metadata, output, or validation, read and use the `nb-ts` skill. Keep NbTs optional when the task is only about core serialization.
+
+## Progressive references
+
+- Read [Ecto, Inertia, and contract boundaries](references/ecto-inertia-boundaries.md) when implementing a concrete Ecto serializer, a computed or nullable association, an Inertia typed prop, or a serializer contract test. It records the current return shape, camelization behavior, computed callback arity, and a runnable-style unit-test pattern.
+
 ## Upgrade or migrate
 
 - Compare locked versions, DSL/compiler output, config defaults, generated TypeScript, Phoenix/Ecto/Jason versions, and release notes before upgrading. Re-run representative serializers and inspect key casing, null/optional behavior, nested relationships, and error handling.
@@ -35,4 +44,5 @@ Use this skill for `nb_serializer` schemas, nested relationships, computed/condi
 - For compile failures, inspect explicit field types, nested serializer declarations, `from:` fields against the source struct, optional/nullable modifiers, and custom protocol implementations. For runtime errors, inspect the actual struct/map shape, loaded Ecto associations, circular `within` options, and serializer runtime opts.
 - For unexpected JSON, check camelization/preserved keys, root/meta configuration, Phoenix view shape, and whether `serialize` returns a tuple that the caller materializes correctly. For slow or memory-heavy output, test streams, relationship loading, and telemetry with production-like data.
 - Verify with `mix deps.get`, `mix compile`, `mix test`, serializer unit tests for representative structs/lists/errors/casing, JSON encoding, Phoenix/Ecto integration when enabled, and `mix nb_ts.gen --validate` when type metadata is configured.
+- If a global compile or NbTs generation run fails in unrelated modules, preserve and report that failure. Isolate the serializer contract with a focused module/test or targeted generator, fix only the causal failure, and never disable checks, delete generated files, or swallow errors to make the run appear green.
 - If “latest” is requested, consult current HexDocs/GitHub source for the package and official Phoenix/Ecto/Jason documentation; state the date checked and compare with `mix.lock`.

@@ -84,4 +84,22 @@ defmodule Mix.Tasks.NbSerializer.InstallTest do
     skill_path = Path.expand("../../../../usage-rules/skills/nb-serializer/SKILL.md", __DIR__)
     assert File.exists?(skill_path)
   end
+
+  test "ships the progressive serializer contract reference" do
+    root = Path.expand("../../../../", __DIR__)
+    skill = File.read!(Path.join(root, "usage-rules/skills/nb-serializer/SKILL.md"))
+
+    reference =
+      File.read!(
+        Path.join(root, "usage-rules/skills/nb-serializer/references/ecto-inertia-boundaries.md")
+      )
+
+    assert skill =~ "references/ecto-inertia-boundaries.md"
+    assert reference =~ "NbSerializer.serialize/2"
+    assert reference =~ "NbSerializer.serialize(serializer, data"
+    assert reference =~ "on_missing: :null"
+    assert reference =~ "{Serializer, value}"
+    assert reference =~ "list_of(ref(MyApp.Blog.PostSerializer))"
+    assert reference =~ "compute_name(data, opts)"
+  end
 end
